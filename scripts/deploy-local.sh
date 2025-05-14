@@ -23,5 +23,7 @@ echo "✅ Frontend built successfully."
 # echo "🔄 Restarting server..."
 # sudo systemctl restart web-frontend
 
+echo "🔄 Restarting web-frontend service..."
+sudo systemctl restart web-frontend
 echo "✅ Deployment complete."
 
