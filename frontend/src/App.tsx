@@ -1,18 +1,7 @@
-import { useEffect, useState } from "react";
+import WebLanding from './WebLanding';
 
 function App() {
-  const [hostname, setHostname] = useState("");
-
-  useEffect(() => {
-    const host = window.location.hostname;
-    setHostname(host);
-  }, []);
-
-  return (
-    <div style={{ fontFamily: "sans-serif", padding: "2rem" }}>
-      <h1>Hello, {hostname}</h1>
-    </div>
-  );
+  return <WebLanding />;
 }
 
 export default App;
