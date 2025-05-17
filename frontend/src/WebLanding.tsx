@@ -1,15 +1,21 @@
 import { useEffect, useState } from 'react';
+
+import { SiYoutube, SiInstagram, SiFacebook, SiApple, SiAndroid } from "react-icons/si";
+import { MdEmail } from "react-icons/md";
+
 const MOCK_API_URL = `${import.meta.env.VITE_API_BASE}/web/public_content`;
 
 type WebPublicContent = {
   name: string;
   slug: string;
-  logo_url?: string;
   tagline: string;
+  subline: string;
   sections: { title: string; html: string }[];
   social?: {
     youtube?: string;
     instagram?: string;
+    facebook?: string;
+    email?: string;
   };
 };
 
@@ -17,7 +23,11 @@ export default function WebLanding() {
   const [data, setData] = useState<WebPublicContent | null>(null);
 
   useEffect(() => {
-    fetch(MOCK_API_URL)
+    fetch(MOCK_API_URL, {
+      headers: {
+        'X-Club-Host': window.location.hostname,
+      },
+    })
       .then(res => res.json())
       .then(setData)
       .catch(console.error);
@@ -30,71 +40,98 @@ export default function WebLanding() {
   const fallbackLogoUrl = `https://d2o72uxgym8vs9.cloudfront.net/clubs/defaults/logo.png`;
   const heroUrl = `${assetBase}/hero.jpg?v=20240517`;
   const fallbackHeroUrl = `https://d2o72uxgym8vs9.cloudfront.net/clubs/defaults/hero.jpg`;
+  const IOS_APP_URL = "https://apps.apple.com/us/app/snookerclub/id6475537905";
+  const ANDROID_APP_URL = "https://play.google.com/store/apps/details?id=com.ottawasnookerclub.SnookerClub&pli=1";
 
   return (
-    <div
-      className="w-full text-gray-200 bg-black"
-      style={{
-        backgroundImage: `linear-gradient(to bottom, rgba(0,0,0,0.4), rgba(0,0,0,1)), url('${heroUrl || fallbackHeroUrl}')`,
-        backgroundRepeat: 'no-repeat',
-        backgroundSize: '100% auto',
-        backgroundPosition: 'top center',
-        backgroundAttachment: 'scroll', // could be 'fixed' for subtle parallax
-      }}
-    >
-      <div className="relative px-4 pt-16 pb-32 max-w-5xl mx-auto text-center">
-        {/* Logo + tagline at top */}
-        <img
-          src={logoUrl || fallbackLogoUrl}
-          alt={`${data.name} logo`}
-          className="w-[85%] h-auto mx-auto mb-6 drop-shadow-xl"
-        />
-        <p className="text-xl md:text-2xl text-gray-200 mb-12">
-          Play Like the Pros — At Your Table
-        </p>
-  
-        {/* Content Sections */}
-        {data.sections.map((section, idx) => (
-          <section
-            key={idx}
-            className="max-w-4xl mx-auto px-4 py-10 border-neutral-700"
-          >
-            <h2 className="text-3xl font-bold mb-4 text-red-400">{section.title}</h2>
-            <div
-              className="prose prose-invert prose-lg max-w-none text-neutral-200"
-              dangerouslySetInnerHTML={{ __html: section.html }}
-            />
-          </section>
-        ))}
-  
-        {/* Footer */}
-        <footer className="text-center py-10 border-neutral-700 mt-16">
-          <p className="text-sm text-neutral-400">
-            &copy; {new Date().getFullYear()} {data.name}
-          </p>
-          <div className="mt-3 flex justify-center gap-6">
-            {data.social?.youtube && (
-              <a
-                href={data.social.youtube}
-                className="text-blue-400 hover:text-white underline"
-                target="_blank"
-              >
-                YouTube
-              </a>
-            )}
-            {data.social?.instagram && (
-              <a
-                href={data.social.instagram}
-                className="text-pink-400 hover:text-white underline"
-                target="_blank"
-              >
-                Instagram
-              </a>
-            )}
+    <>
+      {/* Static Top Navigation Bar */}
+      <nav className="fixed top-0 left-0 w-full z-30 bg-black/50 backdrop-blur-md text-white">
+        <div className="max-w-6xl mx-auto px-4 py-3 flex justify-between items-center">
+          <div className="text-lg font-bold">OSC</div>
+          <div className="space-x-6 text-sm font-medium">
+            <a href="#" className="hover:text-red-400">Home</a>
+            <a href="#" className="hover:text-red-400">Results</a>
+            <a href="#" className="hover:text-red-400">Events</a>
+            <a href="#" className="hover:text-red-400">Login</a>
+            <a href="#" className="hover:text-red-400">Admin</a>
           </div>
-        </footer>
+        </div>
+      </nav>
+
+      {/* Hero + content area */}
+      <div
+        className="w-full text-gray-200 bg-black pt-16"
+        style={{
+          backgroundImage: `linear-gradient(to bottom, rgba(0,0,0,0.4), rgba(0,0,0,1)), url('${heroUrl || fallbackHeroUrl}')`,
+          backgroundRepeat: 'no-repeat',
+          backgroundSize: '100% auto',
+          backgroundPosition: 'top center',
+          backgroundAttachment: 'scroll',
+        }}
+      >
+        <div className="relative px-4 pb-32 max-w-5xl mx-auto text-center">
+          {/* Logo + tagline */}
+          <img
+            src={logoUrl || fallbackLogoUrl}
+            alt={`${data.name} logo`}
+            className="w-[85%] h-auto mx-auto mb-6 drop-shadow-xl"
+          />
+          <p className="text-xl md:text-2xl text-gray-200 mb-4">
+            {data.tagline}
+          </p>
+          <p className="text-md md:text-lg text-gray-400 mb-12 max-w-2xl mx-auto">
+            {data.subline}
+          </p>
+
+          {/* Content Sections */}
+          {data.sections.map((section, idx) => (
+            <section
+              key={idx}
+              className="max-w-4xl mx-auto px-4 py-10"
+            >
+              <h2 className="text-3xl font-bold mb-4 text-gray-300">{section.title}</h2>
+              <div
+                className="prose prose-invert prose-lg max-w-none text-neutral-200"
+                dangerouslySetInnerHTML={{ __html: section.html }}
+              />
+            </section>
+          ))}
+
+          {/* Footer */}
+          <footer className="text-center py-10 mt-16 text-neutral-400">
+            <div className="flex justify-center gap-6 my-6 text-white text-xl">
+              {data.social?.email && (
+                <a href={`mailto:${data.social.email}`} target="_blank" className="hover:text-red-400">
+                  <MdEmail />
+                </a>
+              )}
+              {data.social?.facebook && (
+                <a href={data.social.facebook} target="_blank" className="hover:text-red-400">
+                  <SiFacebook />
+                </a>
+              )}
+              {data.social?.instagram && (
+                <a href={data.social.instagram} target="_blank" className="hover:text-red-400">
+                  <SiInstagram />
+                </a>
+              )}
+              {data.social?.youtube && (
+                <a href={data.social.youtube} target="_blank" className="hover:text-red-400">
+                  <SiYoutube />
+                </a>
+              )}
+              <a href={IOS_APP_URL} target="_blank" className="hover:text-red-400">
+                <SiApple />
+              </a>
+              <a href={ANDROID_APP_URL} target="_blank" className="hover:text-red-400">
+                <SiAndroid />
+              </a>
+            </div>
+          </footer>
+        </div>
       </div>
-    </div>
+    </>
   );
-  }
+}
 
