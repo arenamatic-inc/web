@@ -47,10 +47,24 @@ data "aws_lb" "existing" {
 resource "aws_lb_target_group" "web_tg" {
   name         = "web-tg"
   port         = 80
-  protocol     = "HTTP"
+  protocol     = "HTTP"         # ✅ must be HTTP
   vpc_id       = var.vpc_id
   target_type  = "instance"
+
+  health_check {
+    protocol = "HTTP"           # ✅ not HTTPS
+    path     = "/"              # or a known-good path
+    port     = "80"
+  }
 }
+
+#resource "aws_lb_target_group" "web_tg" {
+#  name         = "web-tg"
+#  port         = 80
+#  protocol     = "HTTP"
+#  vpc_id       = var.vpc_id
+#  target_type  = "instance"
+#}
 
 resource "aws_lb_target_group_attachment" "web_attach" {
   target_group_arn = aws_lb_target_group.web_tg.arn

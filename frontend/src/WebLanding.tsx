@@ -1,9 +1,9 @@
 import { useEffect, useState } from 'react';
-
 const MOCK_API_URL = `${import.meta.env.VITE_API_BASE}/web/public_content`;
 
 type WebPublicContent = {
   name: string;
+  slug: string;
   logo_url?: string;
   tagline: string;
   sections: { title: string; html: string }[];
@@ -25,49 +25,39 @@ export default function WebLanding() {
 
   if (!data) return <div className="p-8">Loading...</div>;
 
+  const assetBase = `https://d2o72uxgym8vs9.cloudfront.net/clubs/${data.slug}`;
+  const logoUrl = `${assetBase}/logo.png?v=20240517`;
+  const fallbackLogoUrl = `https://d2o72uxgym8vs9.cloudfront.net/clubs/defaults/logo.png`;
+  const heroUrl = `${assetBase}/hero.jpg?v=20240517`;
+  const fallbackHeroUrl = `https://d2o72uxgym8vs9.cloudfront.net/clubs/defaults/hero.jpg`;
+
   return (
-    <>
-      <div className="bg-blue-700 text-white p-4 text-center">✔ Tailwind is working</div>
-      <div className="bg-neutral-900 text-white p-4">Tailwind dark mode test</div>
-      <div className="bg-black text-white p-4">This should be black background, white text</div>
-      <div style={{ backgroundColor: "#111", color: "#fff", padding: "1rem" }}>
-  Hardcoded dark style test
-</div>
-
-
-      <div className="min-h-screen bg-neutral-900 text-white font-sans border-8 border-red-500">
-        {/* Hero Section */}
-        <section className="text-center py-20 px-4">
-          <img src={data.logo_url} alt="Logo" className="mx-auto h-28 mb-6 drop-shadow-xl" />
-          <h1 className="text-5xl font-extrabold tracking-tight mb-2 text-white">
-            {data.name}
-          </h1>
-          <p className="text-xs italic text-yellow-300 mb-4">
-            Deployed: {new Date().toDateString()}
-          </p>
-          <p className="text-xl text-neutral-300 max-w-xl mx-auto">
-            {data.tagline}
-          </p>
-          <div className="mt-8 flex justify-center gap-4 flex-wrap">
-            <button className="bg-red-600 hover:bg-red-700 text-white px-6 py-3 rounded-xl shadow-md">
-              Join Now
-            </button>
-            <button className="border border-white hover:border-red-400 text-white px-6 py-3 rounded-xl shadow-md">
-              View Matches
-            </button>
-          </div>
-          <div className="mt-6">
-            <button className="text-sm text-blue-400 underline hover:text-blue-300">
-              Login
-            </button>
-          </div>
-        </section>
-
+    <div
+      className="w-full text-gray-200 bg-black"
+      style={{
+        backgroundImage: `linear-gradient(to bottom, rgba(0,0,0,0.4), rgba(0,0,0,1)), url('${heroUrl || fallbackHeroUrl}')`,
+        backgroundRepeat: 'no-repeat',
+        backgroundSize: '100% auto',
+        backgroundPosition: 'top center',
+        backgroundAttachment: 'scroll', // could be 'fixed' for subtle parallax
+      }}
+    >
+      <div className="relative px-4 pt-16 pb-32 max-w-5xl mx-auto text-center">
+        {/* Logo + tagline at top */}
+        <img
+          src={logoUrl || fallbackLogoUrl}
+          alt={`${data.name} logo`}
+          className="w-[85%] h-auto mx-auto mb-6 drop-shadow-xl"
+        />
+        <p className="text-xl md:text-2xl text-gray-200 mb-12">
+          Play Like the Pros — At Your Table
+        </p>
+  
         {/* Content Sections */}
         {data.sections.map((section, idx) => (
           <section
             key={idx}
-            className="max-w-4xl mx-auto px-4 py-10 border-t border-neutral-600"
+            className="max-w-4xl mx-auto px-4 py-10 border-neutral-700"
           >
             <h2 className="text-3xl font-bold mb-4 text-red-400">{section.title}</h2>
             <div
@@ -76,9 +66,9 @@ export default function WebLanding() {
             />
           </section>
         ))}
-
+  
         {/* Footer */}
-        <footer className="text-center py-10 border-t border-neutral-600 mt-16">
+        <footer className="text-center py-10 border-neutral-700 mt-16">
           <p className="text-sm text-neutral-400">
             &copy; {new Date().getFullYear()} {data.name}
           </p>
@@ -104,7 +94,7 @@ export default function WebLanding() {
           </div>
         </footer>
       </div>
-    </>
+    </div>
   );
-}
+  }
 
