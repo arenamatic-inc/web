@@ -63,13 +63,17 @@ export default function WebLanding() {
       <div
         className="w-full text-gray-200 bg-black pt-16"
         style={{
-          backgroundImage: `linear-gradient(to bottom, rgba(0,0,0,0.4), rgba(0,0,0,1)), url('${heroUrl || fallbackHeroUrl}')`,
-          backgroundRepeat: 'no-repeat',
-          backgroundSize: '100% auto',
-          backgroundPosition: 'top center',
+          backgroundImage: `
+            linear-gradient(to bottom, rgba(0, 0, 0, 0.8), rgba(0,0,0,1)),
+            linear-gradient(to bottom, rgba(0, 0, 0, 0.4), rgba(0, 0, 0, 0.8)),
+            url('${heroUrl || fallbackHeroUrl}')
+          `,
+          backgroundRepeat: 'no-repeat, no-repeat, repeat-y',
+          backgroundSize: '100% 200px, 100% 100%, 100% auto',
+          backgroundPosition: 'top, top, top center',
           backgroundAttachment: 'scroll',
         }}
-      >
+              >
         <div className="relative px-4 pb-32 max-w-5xl mx-auto text-center">
           {/* Logo + tagline */}
           <img
