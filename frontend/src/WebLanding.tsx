@@ -1,7 +1,8 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { SiYoutube, SiInstagram, SiFacebook, SiApple, SiAndroid } from "react-icons/si";
 import { MdEmail } from "react-icons/md";
-import { useAuth } from './auth/useAuth';
+// import { useAuth } from './auth/useAuth';
+import PageLayout from "./PageLayout";
 
 const MOCK_API_URL = `${import.meta.env.VITE_API_BASE}/web/public_content`;
 
@@ -19,27 +20,21 @@ type WebPublicContent = {
   };
 };
 
-function startLogin() {
-  const state = `${window.location.origin}/login/finish`;
-  window.location.href = `https://auth.arenamatic.ca/login?state=${encodeURIComponent(state)}`;
-}
-
 export default function WebLanding() {
   const [data, setData] = useState<WebPublicContent | null>(null);
-  const [showDropdown, setShowDropdown] = useState(false);
-  const dropdownRef = useRef<HTMLDivElement>(null);
+  // const dropdownRef = useRef<HTMLDivElement>(null);
 
-  useEffect(() => {
-    function handleClickOutside(event: MouseEvent) {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
-        setShowDropdown(false);
-      }
-    }
+  // useEffect(() => {
+  //   function handleClickOutside(event: MouseEvent) {
+  //     if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+  //       setShowDropdown(false);
+  //     }
+  //   }
 
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, []);
-  const { user, logout } = useAuth();
+  //   document.addEventListener("mousedown", handleClickOutside);
+  //   return () => document.removeEventListener("mousedown", handleClickOutside);
+  // }, []);
+  // const { user, logout } = useAuth();
 
   useEffect(() => {
     fetch(MOCK_API_URL, {
@@ -57,68 +52,14 @@ export default function WebLanding() {
   const assetBase = `https://d2o72uxgym8vs9.cloudfront.net/clubs/${data.slug}`;
   const logoUrl = `${assetBase}/logo.png?v=20240517`;
   const fallbackLogoUrl = `https://d2o72uxgym8vs9.cloudfront.net/clubs/defaults/logo.png`;
-  const heroUrl = `${assetBase}/hero.jpg?v=20240517`;
-  const fallbackHeroUrl = `https://d2o72uxgym8vs9.cloudfront.net/clubs/defaults/hero.jpg`;
   const IOS_APP_URL = "https://apps.apple.com/us/app/snookerclub/id6475537905";
   const ANDROID_APP_URL = "https://play.google.com/store/apps/details?id=com.ottawasnookerclub.SnookerClub&pli=1";
 
 
   return (
     <>
-      {/* Static Top Navigation Bar */}
-      <nav className="fixed top-0 left-0 w-full z-30 bg-black/50 backdrop-blur-md text-white">
-        <div className="max-w-6xl mx-auto px-4 py-3 flex justify-between items-center">
-          <div className="text-lg font-bold">OSC</div>
-          <div className="space-x-6 text-sm font-medium">
-            <a href="#" className="hover:text-red-400">Home</a>
-            <a href="#" className="hover:text-red-400">Results</a>
-            <a href="#" className="hover:text-red-400">Events</a>
-            {user ? (
-              <div className="relative inline-block" ref={dropdownRef}>
-                <button
-                  onClick={() => setShowDropdown(prev => !prev)}
-                  className="hover:text-red-400"
-                >
-                  {user.email || "Profile"}
-                </button>
-                {showDropdown && (
-                  <div className="absolute left-0 mt-2 bg-black p-2 rounded shadow-lg text-sm min-w-[140px] text-left z-50">
-                    <a
-                      href="/account"
-                      className="block px-4 py-2 text-white hover:text-red-400"
-                    >
-                      Account
-                    </a>
-                    <button
-                      onClick={logout}
-                      className="block w-full text-left px-4 py-2 text-white hover:text-red-400"
-                    >
-                      Logout
-                    </button>
-                  </div>
-                )}
-              </div>
-            ) : (
-              <button onClick={startLogin} className="hover:text-red-400">
-                Login
-              </button>
-            )}
-            <a href="#" className="hover:text-red-400">Admin</a>
-          </div>
-        </div>
-      </nav>
+      <PageLayout>
 
-      {/* Hero + content area */}
-      <div
-        className="w-full text-gray-200 bg-black pt-16"
-        style={{
-          backgroundImage: `linear-gradient(to bottom, rgba(0,0,0,0.4), rgba(0,0,0,1)), url('${heroUrl || fallbackHeroUrl}')`,
-          backgroundRepeat: 'no-repeat',
-          backgroundSize: '100% auto',
-          backgroundPosition: 'top center',
-          backgroundAttachment: 'scroll',
-        }}
-      >
         <div className="relative px-4 pb-32 max-w-5xl mx-auto text-center">
           {/* Logo + tagline */}
           <img
@@ -179,7 +120,7 @@ export default function WebLanding() {
             </div>
           </footer>
         </div>
-      </div>
+      </PageLayout>
     </>
   );
 }
