@@ -22,19 +22,6 @@ type WebPublicContent = {
 
 export default function WebLanding() {
   const [data, setData] = useState<WebPublicContent | null>(null);
-  // const dropdownRef = useRef<HTMLDivElement>(null);
-
-  // useEffect(() => {
-  //   function handleClickOutside(event: MouseEvent) {
-  //     if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
-  //       setShowDropdown(false);
-  //     }
-  //   }
-
-  //   document.addEventListener("mousedown", handleClickOutside);
-  //   return () => document.removeEventListener("mousedown", handleClickOutside);
-  // }, []);
-  // const { user, logout } = useAuth();
 
   useEffect(() => {
     fetch(MOCK_API_URL, {
@@ -42,8 +29,13 @@ export default function WebLanding() {
         'X-Club-Host': window.location.hostname,
       },
     })
+    
       .then(res => res.json())
-      .then(setData)
+      .then((json) => {
+        debugger;
+        setData(json);
+        localStorage.setItem("room_slug", json.slug);
+      })
       .catch(console.error);
   }, []);
 

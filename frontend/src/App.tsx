@@ -30,10 +30,10 @@ function App() {
             </>
           ) : (
             <>
-            <Route path="*" element={<WebLanding />} />
-            <Route path="/login/finish" element={<LoginFinish />} />
-            <Route path="/account" element={<Account />} />
-            <Route path="/leagues" element={<LeaguePage />} />
+              <Route path="*" element={<WebLanding />} />
+              <Route path="/login/finish" element={<LoginFinish />} />
+              <Route path="/account" element={<Account />} />
+              <Route path="/leagues" element={<LeaguePage />} />
             </>
           )}
         </Routes>

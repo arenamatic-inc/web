@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import PageLayout from "./PageLayout";
 
 const API_BASE = import.meta.env.VITE_API_BASE!;
-const API_KEY = import.meta.env.VITE_WEB_API_KEY!;
+const API_KEY = import.meta.env.VITE_API_KEY!;
 
 export default function LeagueViewer() {
     const [leagues, setLeagues] = useState<any[]>([]);
@@ -10,9 +10,12 @@ export default function LeagueViewer() {
     const [matches, setMatches] = useState<any[]>([]);
     const [standings, setStandings] = useState<any[]>([]);
     const [tab, setTab] = useState<"results" | "schedule" | "standings">("results");
+    const room_slug = localStorage.getItem("room_slug");
 
     useEffect(() => {
-        fetch(`${API_BASE}/event/${selectedSlug}/leagues`, {
+        console.log(`${API_BASE}/event/${room_slug}/leagues`)
+        debugger
+        fetch(`${API_BASE}/event/${room_slug}/leagues`, {
             headers: {
                 "x-api-key": API_KEY,
             },

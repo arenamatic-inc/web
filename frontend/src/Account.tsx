@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useAuth } from "./auth/useAuth";
 import PageLayout from "./PageLayout";
+import { authFetch } from "./utils/authFetch";
 
 type UserInfo = {
     id: string;
@@ -26,52 +27,34 @@ export default function Account() {
     const [userInfo, setUserInfo] = useState<UserInfo | null>(null);
     const [permissions, setPermissions] = useState<Permissions | null>(null);
     const [error, setError] = useState<string | null>(null);
+    const slug = localStorage.getItem("room_slug")
 
     useEffect(() => {
-        const token = localStorage.getItem('id_token');
-
-        fetch(`${import.meta.env.VITE_API_BASE}/user/me`, {
+        authFetch(`${import.meta.env.VITE_API_BASE}/user/me`)
+          .then(res => res.json())
+          .then(setUserInfo)
+          .catch(err => {
+            console.error("User info fetch failed:", err);
+            setError("Failed to load user info");
+          });
+    
+          authFetch(`${import.meta.env.VITE_API_BASE}/user/web/mypermissions`, {
+            method: "POST",
             headers: {
-                Authorization: `Bearer ${token}`, // if needed
+              "Content-Type": "application/json", // required for FastAPI to parse JSON
             },
-        })
+            body: JSON.stringify({
+              room_slug: slug,
+            }),
+          })
             .then(res => res.json())
-            .then(data => console.log('User data:', data))
-            .catch(err => console.error('Error fetching user:', err));
-    }, []);
-
-    useEffect(() => {
-        if (!user || !idToken) return;
-
-        const fetchData = async () => {
-            try {
-                const resUser = await fetch(`${import.meta.env.VITE_API_BASE}/user/me`, {
-                    headers: {
-                        Authorization: `Bearer ${idToken}`,
-                    },
-                });
-                if (!resUser.ok) throw new Error("Failed to fetch /user/me");
-                const userData = await resUser.json();
-                setUserInfo(userData);
-
-                const resPerms = await fetch("https://api.ottawasnookerclub.com/user/mypermissions", {
-                    method: "POST",
-                    headers: {
-                        "Content-Type": "application/json",
-                        Authorization: `Bearer ${idToken}`,
-                    },
-                });
-                if (!resPerms.ok) throw new Error("Failed to fetch /user/mypermissions");
-                const permsData = await resPerms.json();
-                setPermissions(permsData);
-            } catch (err: any) {
-                setError(err.message);
-            }
-        };
-
-        fetchData();
-    }, [user, idToken]);
-
+            .then(setPermissions)
+            .catch(err => {
+              console.error("Permissions fetch failed:", err);
+              setError("Failed to load permissions");
+            });
+                }, []);
+    
     if (!user) {
         return (
             <PageLayout>
