@@ -85,23 +85,3 @@ resource "aws_lb_target_group_attachment" "web_attach" {
 #  }
 #}
 
-data "aws_lb_listener" "https" {
-  load_balancer_arn = data.aws_lb.existing.arn
-  port              = 443
-}
-
-resource "aws_lb_listener_rule" "web_default" {
-  listener_arn = data.aws_lb_listener.https.arn
-  priority     = 99  # Must be unique
-
-  action {
-    type             = "forward"
-    target_group_arn = aws_lb_target_group.web_tg.arn
-  }
-  condition {
-    host_header {
-      values = ["mysnookerclub.click", "*.mysnookerclub.click"]
-    }
-  }
-}
-

@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import PageLayout from "./PageLayout";
+import { getRoomSlug } from "./utils/roomSlug";
 
 const API_BASE = import.meta.env.VITE_API_BASE!;
 const API_KEY = import.meta.env.VITE_API_KEY!;
@@ -10,22 +11,29 @@ export default function LeagueViewer() {
     const [matches, setMatches] = useState<any[]>([]);
     const [standings, setStandings] = useState<any[]>([]);
     const [tab, setTab] = useState<"results" | "schedule" | "standings">("results");
-    const room_slug = localStorage.getItem("room_slug");
 
     useEffect(() => {
-        console.log(`${API_BASE}/event/${room_slug}/leagues`)
-        debugger
-        fetch(`${API_BASE}/event/${room_slug}/leagues`, {
-            headers: {
+        async function loadLeagues() {
+          const slug = await getRoomSlug();
+          if (!slug) return;
+      
+          try {
+            const res = await fetch(`${API_BASE}/event/${slug}/leagues`, {
+              headers: {
                 "x-api-key": API_KEY,
-            },
-        })
-            .then((res) => res.json())
-            .then(setLeagues)
-            .catch(console.error);
-    }, []);
+              },
+            });
+            const data = await res.json();
+            setLeagues(data);
+          } catch (err) {
+            console.error("Failed to load leagues:", err);
+          }
+        }
+      
+        loadLeagues();
+      }, []);
 
-    useEffect(() => {
+      useEffect(() => {
         if (!selectedSlug) return;
 
         fetch(`${API_BASE}/event/${selectedSlug}/match_reports`, {
@@ -55,7 +63,7 @@ export default function LeagueViewer() {
                     <div className="text-sm text-gray-400">{match.table_name || "Table TBA"}</div>
                     <div className="text-lg font-semibold my-2">Match Score: {match.p1_games} - {match.p2_games}</div>
 
-                    {match.gamescores?.length > 0 && (
+                    {Array.isArray(match.gamescores) && match.gamescores.length > 0 && (
                         <table className="text-sm mb-2 mx-auto text-white/90">
                             <thead>
                                 <tr>

@@ -2,26 +2,35 @@
 import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "./auth/useAuth";
+import PageLayout from "./PageLayout";
+import { centerHeroText } from "./utils/classnames";
 
 export default function LoginFinish() {
-  const { refreshAuth } = useAuth();
-  const navigate = useNavigate();
+    const { refreshAuth } = useAuth();
+    const navigate = useNavigate();
 
-  useEffect(() => {
-    const hash = new URLSearchParams(window.location.hash.slice(1));
-    const idToken = hash.get("id_token");
-    const accessToken = hash.get("access_token");
+    useEffect(() => {
+        const hash = new URLSearchParams(window.location.hash.slice(1));
+        const idToken = hash.get("id_token");
+        const accessToken = hash.get("access_token");
 
-    if (idToken && accessToken) {
-      localStorage.setItem("id_token", idToken);
-      localStorage.setItem("access_token", accessToken);
-      refreshAuth?.();
-    } else {
-      console.error("[LoginFinish] Missing token(s)");
-    }
+        if (idToken && accessToken) {
+            localStorage.setItem("id_token", idToken);
+            localStorage.setItem("access_token", accessToken);
+            refreshAuth?.();
+        } else {
+            console.error("[LoginFinish] Missing token(s)");
+        }
 
-    navigate("/"); // Or return to where user was before
-  }, []);
+        navigate("/"); // Or return to where user was before
+    }, []);
 
-  return <div className="p-8 text-white">Logging you in…</div>;
+    return (
+        <PageLayout>
+            {/* <div className={centerHeroText}> */}
+            <div>
+                Logging you in...
+            </div>
+        </PageLayout>
+    );
 }

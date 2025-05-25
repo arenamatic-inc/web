@@ -1,4 +1,6 @@
 import { useEffect } from "react";
+import PageLayout from "./PageLayout";
+import { centerHeroText } from "./utils/classnames";
 
 export default function LoginCallback() {
   useEffect(() => {
@@ -53,5 +55,12 @@ export default function LoginCallback() {
       });
   }, []);
 
-  return <div className="p-8 text-white">Completing login…</div>;
+  return (
+    <PageLayout>
+      {/* <div className={centerHeroText}> */}
+      <div>
+        Logging you in…
+      </div>
+    </PageLayout>
+  );
 }

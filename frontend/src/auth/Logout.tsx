@@ -1,5 +1,7 @@
 import { useEffect } from "react";
 import { generatePKCE } from "../pkce"; // adjust path as needed
+import PageLayout from "../PageLayout";
+import { centerHeroText } from "../utils/classnames";
 
 export default function Logout() {
   useEffect(() => {
@@ -11,13 +13,19 @@ export default function Logout() {
     // Redirect to Cognito’s logout URL with both logout_uri and redirect_uri as the referring URL (the club site)
     // const cognitoLogoutUrl = `https://${import.meta.env.VITE_COGNITO_DOMAIN}/logout?client_id=${import.meta.env.VITE_COGNITO_CLIENT_ID}&logout_uri=${encodeURIComponent(returnUrl)}&redirect_uri=${encodeURIComponent(returnUrl)}`;
     // const cognitoLogoutUrl = `https://${import.meta.env.VITE_COGNITO_DOMAIN}/logout?client_id=${import.meta.env.VITE_COGNITO_CLIENT_ID}&logout_uri=${encodeURIComponent(referrerUrl)}&redirect_uri=${encodeURIComponent(referrerUrl)}`;
-    const state = decodeURIComponent(params.get("state") || "/"); 
+    const state = decodeURIComponent(params.get("state") || "/");
     const cognitoLogoutUrl = `https://${import.meta.env.VITE_COGNITO_DOMAIN}/logout?client_id=${import.meta.env.VITE_COGNITO_CLIENT_ID}&logout_uri=${encodeURIComponent(window.location.origin + '/logout/callback')}&redirect_uri=${encodeURIComponent(window.location.origin + '/logout/callback')}#state=${encodeURIComponent(state)}`;
 
     window.location.href = cognitoLogoutUrl;  // Redirect to Cognito's logout endpoint
   }, []);
 
-  return <div className="p-8 text-white">Logging you out...</div>;
+  return (<PageLayout>
+            {/* <div className={centerHeroText}> */}
+            <div>
+      Logging you out...
+    </div>
+  </PageLayout>
+  )
 }
 
 // export default function LogoutCallback() {

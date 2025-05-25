@@ -15,12 +15,6 @@ export default function Navbar() {
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
-
-//   function startLogin() {
-//     const state = ${window.location.origin}/login/finish;
-//     window.location.href = https://auth.arenamatic.ca/login?state=${encodeURIComponent(state)};
-//   }
-  
   
   return (
     <nav className="fixed top-0 left-0 w-full z-30 bg-black/50 backdrop-blur-md text-white">
@@ -30,7 +24,7 @@ export default function Navbar() {
         </div>
         <div className="space-x-6 text-sm font-medium">
           <a href="/" className="hover:text-red-400">Home</a>
-          <a href="#" className="hover:text-red-400">Results</a>
+          {/* <a href="#" className="hover:text-red-400">Results</a> */}
           <a href="/leagues" className="hover:text-red-400">Leagues</a>
           {user ? (
             <div className="relative inline-block" ref={dropdownRef}>

@@ -11,10 +11,13 @@ import Logout from './auth/Logout';
 
 function App() {
   const hostname = window.location.hostname;
-  const isAuthHost = hostname === 'auth.arenamatic.ca';
+  const isAuthHost = hostname === import.meta.env.VITE_AUTH_HOST;
 
   console.log(import.meta.env.VITE_COGNITO_CLIENT_ID); // Should log the value from .env
   console.log(import.meta.env.VITE_COGNITO_DOMAIN); // Log this in your frontend code
+
+  console.log("Detected hostname:", window.location.hostname);
+  console.log("Expected auth host:", import.meta.env.VITE_AUTH_HOST);
 
   return (
     <AuthProvider>

@@ -53,7 +53,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   function login() {
     const state = `${window.location.origin}/login/finish`; // The same as before, this is where the user will end up after login.
-    window.location.href = `https://auth.arenamatic.ca/login?state=${encodeURIComponent(state)}`;
+    window.location.href = `https://${import.meta.env.VITE_AUTH_HOST}/login?state=${encodeURIComponent(state)}`;
   }
 
   const logout = () => {
@@ -65,32 +65,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setAccessToken(null);
     setIdToken(null);
   
-    const logoutUrl = `https://auth.arenamatic.ca/logout?state=${encodeURIComponent(currentUrl)}`;
+    const logoutUrl = `https://${import.meta.env.VITE_AUTH_HOST}/logout?state=${encodeURIComponent(currentUrl)}`;
     window.location.href = logoutUrl;
   };
     
-
-  // const logout = () => {
-  //   // Capture the current URL to redirect back to after logout
-  //   const currentUrl = window.location.href;  // The page where the user is before logging out
-    
-  //   // Clear local session data
-  //   localStorage.removeItem("id_token");
-  //   localStorage.removeItem("access_token");
-  //   localStorage.removeItem("pkce_verifier");
-  
-  //   // Clear context data
-  //   setUser(null);              // Reset user context to null
-  //   setAccessToken(null);       // Reset access token context
-  //   setIdToken(null);           // Reset ID token context
-  
-  //   // Redirect to Cognito's logout URL, passing the original URL as state
-  //   const logoutUri = import.meta.env.VITE_COGNITO_LOGOUT_URI;  // e.g., /logout/callback
-  //   const logoutUrl = `https://auth.arenamatic.ca/logout?logout_uri=${encodeURIComponent(logoutUri)}&state=${encodeURIComponent(currentUrl)}`;
-  
-  //   window.location.href = logoutUrl; // Redirect to Cognito's logout URL
-  // };
-
     return (
     <AuthContext.Provider value={{ user, accessToken, idToken, login, logout, refreshAuth }}>
       {children}

@@ -7,4 +7,6 @@ subnet_ids = [
 key_name        = "steve"
 domain_name     = "mysnookerclub.click"
 certificate_arn = "arn:aws:acm:ca-central-1:551424801715:certificate/0ece52fc-9de5-4cf4-b933-91f13d67c77d"
+web_staging_target_group_arn = "arn:aws:elasticloadbalancing:ca-central-1:551424801715:targetgroup/web-tg/720bbe407c227191"
+web_prod_target_group_arn    = "arn:aws:elasticloadbalancing:ca-central-1:551424801715:targetgroup/web-prod-tg/bf6c0ab3d61338fb"
 

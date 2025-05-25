@@ -1,4 +1,6 @@
 import { useEffect } from "react";
+import PageLayout from "./PageLayout";
+import { centerHeroText } from "./utils/classnames";
 
 export default function LogoutCallback() {
   useEffect(() => {
@@ -12,7 +14,14 @@ export default function LogoutCallback() {
     window.location.replace(state || '/');
   }, []);
 
-  return <div className="p-8 text-white">Logging you out…</div>;
+  return (
+    <PageLayout>
+            {/* <div className={centerHeroText}> */}
+            <div>
+        Logging you out...
+      </div>
+    </PageLayout>
+  );
 }
 // export default function LogoutCallback() {
 //   useEffect(() => {

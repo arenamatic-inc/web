@@ -1,4 +1,4 @@
-// import { useEffect } from "react";
+import { useEffect } from "react";
 import NavBar from "./NavBar";
 import { usePublicContent } from "./hooks/usePublicContent";
 
@@ -15,13 +15,20 @@ export default function PageLayout({ children }: PageLayoutProps) {
 
     const heroUrl = `${assetBase}/hero.jpg?v=20240517`;
 
+    useEffect(() => {
+        if (publicContent?.name) {
+            document.title = publicContent.name;
+        }
+    }, [publicContent]);
+
     return (
         <>
             <NavBar />
             <div
                 className="w-full text-gray-200 bg-black pt-16 min-h-screen"
                 style={{
-                    backgroundImage: `linear-gradient(to bottom, rgba(0,0,0,0.2), rgba(0,0,0,0.6)), url('${heroUrl}')`,
+                    backgroundImage: `linear-gradient(rgba(0,0,0,0.65), rgba(0,0,0,0.65)), url('${heroUrl}')`,
+                    // backgroundImage: `linear-gradient(to bottom, rgba(0,0,0,0.2), rgba(0,0,0,0.6)), url('${heroUrl}')`,
                     backgroundRepeat: 'no-repeat',
                     backgroundSize: '100% auto',
                     backgroundPosition: 'top center',
