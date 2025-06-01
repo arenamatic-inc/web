@@ -8,7 +8,7 @@ import LoginFinish from './LoginFinish';
 import Login from './auth/Login';
 import LeaguePage from './LeaguePage';
 import Logout from './auth/Logout';
-import ArenamaticLanding from './arenamatic/ArenamaticLanding';
+import ArenamaticLanding from './pages/ArenamaticLanding';
 
 function App() {
   const hostname = window.location.hostname;
