@@ -1,6 +1,7 @@
 // src/auth/AuthContext.tsx
 import { createContext, useEffect, useState } from "react";
 import { generateCodeChallenge, generateRandomString } from "./pkce";
+import { getRoomSlug } from "../utils/roomSlug"; // at the top
 
 type User = {
   sub: string;
@@ -46,7 +47,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         const decoded = JSON.parse(atob(idTokenRaw.split(".")[1]));
         setUser(decoded);
         setAccessToken(access);
-        setIdToken(idTokenRaw); // ✅ set raw token
+        setIdToken(idTokenRaw);
       } catch (err) {
         console.error("Invalid token", err);
         setUser(null);
@@ -63,46 +64,30 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   useEffect(() => {
-    if (!idToken) return; // ⛔ Skip if no token yet
+    if (!idToken) return;
   
-    fetch(`${import.meta.env.VITE_API_BASE}/user/mypermissions`, {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${idToken}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({}),
-    })
-      .then((res) => {
+    (async () => {
+      try {
+        const slug = await getRoomSlug();
+        const res = await fetch(`${import.meta.env.VITE_API_BASE}/user/web/mypermissions`, {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${idToken}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ room_slug: slug }),
+        });
+  
         if (!res.ok) throw new Error("Failed to fetch permissions");
-        return res.json();
-      })
-      .then(setPermissions)
-      .catch((err) => {
+        const data = await res.json();
+        setPermissions(data);
+      } catch (err) {
         console.error("[AuthContext] Failed to load permissions", err);
         setPermissions(null);
-      });
+      }
+    })();
   }, [idToken]);
-  
-  const fetchPermissions = async (token: string) => {
-    try {
-      const res = await fetch(`${import.meta.env.VITE_API_BASE}/user/mypermissions`, {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({}),
-      });
-      if (!res.ok) throw new Error("Failed to fetch permissions");
-      const data = await res.json();
-      setPermissions(data);
-    } catch (err) {
-      console.error("[AuthContext] Failed to load permissions", err);
-      setPermissions(null);
-    }
-  };
-
+    
   function login() {
     const state = `${window.location.origin}/login/finish`; // The same as before, this is where the user will end up after login.
     window.location.href = `https://${import.meta.env.VITE_AUTH_HOST}/login?state=${encodeURIComponent(state)}`;
