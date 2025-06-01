@@ -10,7 +10,22 @@ import LeaguePage from './LeaguePage';
 import Logout from './auth/Logout';
 import ArenamaticLanding from './pages/ArenamaticLanding';
 import RoomActivityPage from './pages/admin/RoomActivity';
+import { ADMIN_MENU_ITEMS } from "./constants/adminMenu";
+import RequirePermission from './auth/RequirePermission';
 
+const adminRoutes = ADMIN_MENU_ITEMS.map(({ path, requiredPermission, component: Component }) => (
+  <Route
+    key={path}
+    path={path}
+    element={
+      <RequirePermission permission={requiredPermission}>
+        <Component />
+      </RequirePermission>
+    }
+  />
+));
+
+// App.tsx
 function App() {
   const hostname = window.location.hostname;
   const isAuthHost = hostname === import.meta.env.VITE_AUTH_HOST;
@@ -49,7 +64,7 @@ function App() {
         <Route path="/login/finish" element={<LoginFinish />} />
         <Route path="/account" element={<Account />} />
         <Route path="/leagues" element={<LeaguePage />} />
-        <Route path="/admin/activity" element={<RoomActivityPage />} />
+        {adminRoutes}
         <Route path="*" element={<div className="p-8">Page not found</div>} />
       </>
     );
