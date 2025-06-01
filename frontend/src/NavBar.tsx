@@ -1,21 +1,40 @@
 import { useEffect, useRef, useState } from "react";
 import { useAuth } from "./auth/useAuth";
 
-export default function Navbar() {
-  const { user, logout, login } = useAuth();  // Destructure login from useAuth
-  const [showDropdown, setShowDropdown] = useState(false);
-  const dropdownRef = useRef<HTMLDivElement>(null);
+const ADMIN_MENU_ITEMS = [
+  {
+    label: "Activity",
+    href: "/admin/activity",
+    requiredPermission: "RoomReadActivity",
+  },
+  // Add more as needed
+];
+
+
+export default function NavBar() {
+  const { user, permissions, logout, login } = useAuth();
+
+  const [showAdminDropdown, setShowAdminDropdown] = useState(false);
+  const adminDropdownRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
-        setShowDropdown(false);
+      if (adminDropdownRef.current && !adminDropdownRef.current.contains(event.target as Node)) {
+        setShowAdminDropdown(false);
       }
     }
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
-  
+
+  const hasAdminAccess = permissions?.room_permissions?.some(p =>
+    ADMIN_MENU_ITEMS.some(item => item.requiredPermission === p)
+  );
+
+  const visibleAdminItems = ADMIN_MENU_ITEMS.filter(item =>
+    permissions?.room_permissions?.includes(item.requiredPermission)
+  );
+
   return (
     <nav className="fixed top-0 left-0 w-full z-30 bg-black/50 backdrop-blur-md text-white">
       <div className="max-w-6xl mx-auto px-4 py-3 flex justify-between items-center">
@@ -24,24 +43,33 @@ export default function Navbar() {
         </div>
         <div className="space-x-6 text-sm font-medium">
           <a href="/" className="hover:text-red-400">Home</a>
-          {/* <a href="#" className="hover:text-red-400">Results</a> */}
           <a href="/leagues" className="hover:text-red-400">Leagues</a>
-          {user ? (
-            <div className="relative inline-block" ref={dropdownRef}>
+
+          {hasAdminAccess && (
+            <div className="relative inline-block" ref={adminDropdownRef}>
               <button
-                onClick={() => setShowDropdown(prev => !prev)}
+                onClick={() => setShowAdminDropdown(prev => !prev)}
                 className="hover:text-red-400"
               >
-                {user.email || "Profile"}
+                Admin
               </button>
-              {showDropdown && (
+              {showAdminDropdown && (
                 <div className="absolute left-0 mt-2 bg-black p-2 rounded shadow-lg text-sm min-w-[140px] text-left z-50">
-                  <a href="/account" className="block px-4 py-2 text-white hover:text-red-400">Account</a>
-                  <button onClick={logout} className="block w-full text-left px-4 py-2 text-white hover:text-red-400">
-                    Logout
-                  </button>
+                  {visibleAdminItems.map(({ label, href }) => (
+                    <a key={href} href={href} className="block px-4 py-2 text-white hover:text-red-400">
+                      {label}
+                    </a>
+                  ))}
                 </div>
               )}
+            </div>
+          )}
+
+          {user ? (
+            <div className="relative inline-block">
+              <button onClick={logout} className="hover:text-red-400">
+                {user.email || "Logout"}
+              </button>
             </div>
           ) : (
             <button onClick={login} className="hover:text-red-400">Login</button>

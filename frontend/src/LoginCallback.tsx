@@ -38,8 +38,6 @@ export default function LoginCallback() {
         console.log("[LoginCallback] Token response:", tokens);
         console.log("[LoginCallback] State:", state);
 
-        debugger;
-
         if (tokens.id_token && tokens.access_token) {
           const redirectTo = `${state}#id_token=${tokens.id_token}&access_token=${tokens.access_token}`;
           console.log("[LoginCallback] Redirecting to:", redirectTo);

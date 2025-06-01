@@ -32,7 +32,6 @@ export default function WebLanding() {
     
       .then(res => res.json())
       .then((json) => {
-        debugger;
         setData(json);
         localStorage.setItem("room_slug", json.slug);
       })

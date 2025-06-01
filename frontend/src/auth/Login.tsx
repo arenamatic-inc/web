@@ -21,7 +21,6 @@ export default function Login() {
                 `&code_challenge_method=S256` +
                 `&state=${encodeURIComponent(state)}`;
 
-            debugger;
             window.location.href = loginUrl;
         });
     }, []);

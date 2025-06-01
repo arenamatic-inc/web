@@ -9,6 +9,7 @@ import Login from './auth/Login';
 import LeaguePage from './LeaguePage';
 import Logout from './auth/Logout';
 import ArenamaticLanding from './pages/ArenamaticLanding';
+import RoomActivityPage from './pages/admin/RoomActivity';
 
 function App() {
   const hostname = window.location.hostname;
@@ -48,6 +49,7 @@ function App() {
         <Route path="/login/finish" element={<LoginFinish />} />
         <Route path="/account" element={<Account />} />
         <Route path="/leagues" element={<LeaguePage />} />
+        <Route path="/admin/activity" element={<RoomActivityPage />} />
         <Route path="*" element={<div className="p-8">Page not found</div>} />
       </>
     );
