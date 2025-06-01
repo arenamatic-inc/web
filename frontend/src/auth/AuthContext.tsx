@@ -9,10 +9,18 @@ type User = {
   [key: string]: any;
 };
 
+type Permissions = {
+  user_id: string;
+  global_permissions: string[];
+  room_permissions: string[];
+  event_permissions: string[];
+};
+
 type AuthContextType = {
   user: User | null;
   accessToken: string | null;
   idToken: string | null;
+  permissions: Permissions | null;
   login: () => void;
   logout: () => void;
   refreshAuth: () => void;
@@ -24,6 +32,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [idToken, setIdToken] = useState<string | null>(null);
   const [user, setUser] = useState<User | null>(null);
   const [accessToken, setAccessToken] = useState<string | null>(null);
+  const [permissions, setPermissions] = useState<Permissions | null>(null);
 
   useEffect(() => {
     refreshAuth();
@@ -43,11 +52,54 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setUser(null);
         setAccessToken(null);
         setIdToken(null);
+        setPermissions(null); 
       }
     } else {
       setUser(null);
       setAccessToken(null);
       setIdToken(null);
+      setPermissions(null); 
+    }
+  };
+
+  useEffect(() => {
+    if (!idToken) return; // ⛔ Skip if no token yet
+  
+    fetch(`${import.meta.env.VITE_API_BASE}/user/mypermissions`, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${idToken}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({}),
+    })
+      .then((res) => {
+        if (!res.ok) throw new Error("Failed to fetch permissions");
+        return res.json();
+      })
+      .then(setPermissions)
+      .catch((err) => {
+        console.error("[AuthContext] Failed to load permissions", err);
+        setPermissions(null);
+      });
+  }, [idToken]);
+  
+  const fetchPermissions = async (token: string) => {
+    try {
+      const res = await fetch(`${import.meta.env.VITE_API_BASE}/user/mypermissions`, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({}),
+      });
+      if (!res.ok) throw new Error("Failed to fetch permissions");
+      const data = await res.json();
+      setPermissions(data);
+    } catch (err) {
+      console.error("[AuthContext] Failed to load permissions", err);
+      setPermissions(null);
     }
   };
 
@@ -64,13 +116,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setUser(null);
     setAccessToken(null);
     setIdToken(null);
+    setPermissions(null); 
+
   
     const logoutUrl = `https://${import.meta.env.VITE_AUTH_HOST}/logout?state=${encodeURIComponent(currentUrl)}`;
     window.location.href = logoutUrl;
   };
     
     return (
-    <AuthContext.Provider value={{ user, accessToken, idToken, login, logout, refreshAuth }}>
+    <AuthContext.Provider value={{ user, accessToken, idToken, permissions, login, logout, refreshAuth }}>
       {children}
     </AuthContext.Provider>
   );
