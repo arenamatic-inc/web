@@ -18,6 +18,8 @@ export type MatchRow = {
     start: string;
     duration: number;
     players: string[];
+    broadcast_id?: string | null;
+    stream_status?: string | null;
 };
 
 export type DoorEventRow = {
@@ -36,7 +38,7 @@ export default function RoomActivityPage() {
     const [sortingDoors, setSortingDoors] = useState<SortingState>([]);
     const [globalFilterMatches, setGlobalFilterMatches] = useState("");
     const [globalFilterDoors, setGlobalFilterDoors] = useState("");
-    const [activeTab, setActiveTab] = useState<"matches" | "doors">("matches");
+    const [activeTab, setActiveTab] = useState<"matches" | "doors" | "streams">("matches");
     const [matchBefore, setMatchBefore] = useState<string | null>(null);
     const [doorBefore, setDoorBefore] = useState<string | null>(null);
 
@@ -114,6 +116,28 @@ export default function RoomActivityPage() {
         { accessorKey: "start", header: "Start Time", cell: (info) => new Date(info.getValue() as string).toLocaleString() },
         { accessorKey: "duration", header: "Duration (min)", cell: (info) => Math.round((info.getValue() as number) / 60) },
         { accessorKey: "players", header: "Players", cell: (info) => (info.getValue() as string[]).join(", ") },
+        {
+            header: "Stream",
+            cell: (info) => {
+                const row = info.row.original;
+                if ((row.stream_status === "live" || row.stream_status === "ended" || row.stream_status === "bound") && row.broadcast_id) {
+                    const url = `https://www.youtube.com/watch?v=${row.broadcast_id}`;
+                    const label = row.stream_status === "live" ? "Watch Live" : "Watch VOD";
+                    return (
+                        <a
+                            href={url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-blue-400 hover:underline"
+                        >
+                            {label}
+                        </a>
+                    );
+                }
+                return null;
+            }
+        }
+
     ];
 
     const doorColumns: ColumnDef<DoorEventRow>[] = [
@@ -171,6 +195,12 @@ export default function RoomActivityPage() {
                         className={`py-1 px-4 rounded ${activeTab === "doors" ? "bg-blue-600" : "bg-gray-700"}`}
                     >
                         Door Access
+                    </button>
+                    <button
+                        onClick={() => setActiveTab("streams")}
+                        className={`py-1 px-4 rounded ${activeTab === "streams" ? "bg-blue-600" : "bg-gray-700"}`}
+                    >
+                        Streams
                     </button>
                 </div>
 
@@ -272,6 +302,46 @@ export default function RoomActivityPage() {
                                 Load More
                             </button>
                         </div>
+                    </div>
+                )}
+                {activeTab === "streams" && (
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        {Object.entries(
+                            matchData.reduce((acc, match) => {
+                                if (!acc[match.table_name]) {
+                                    acc[match.table_name] = match;
+                                } else if (new Date(match.start) > new Date(acc[match.table_name].start)) {
+                                    acc[match.table_name] = match;
+                                }
+                                return acc;
+                            }, {} as Record<string, MatchRow>)
+                        ).sort(([a], [b]) => a.localeCompare(b))
+                            .map(([tableName, match]) => {
+                                const valid = match.broadcast_id && ["live", "ended", "bound"].includes(match.stream_status ?? "");
+                                return (
+                                    <div
+                                        key={tableName}
+                                        className="bg-black/20 border border-white/30 backdrop-blur-sm rounded p-4"
+                                    >
+                                        <div className="mb-2 font-bold text-white">{tableName}</div>
+                                        <div className="aspect-video">
+                                            {valid ? (
+                                                <iframe
+                                                    src={`https://www.youtube.com/embed/${match.broadcast_id}?autoplay=1&mute=1`}
+                                                    allow="autoplay; encrypted-media"
+                                                    allowFullScreen
+                                                    title={tableName}
+                                                    className="w-full h-full rounded"
+                                                />
+                                            ) : (
+                                                <div className="w-full h-full flex items-center justify-center bg-gray-800 text-gray-400 rounded">
+                                                    No stream available
+                                                </div>
+                                            )}
+                                        </div>
+                                    </div>
+                                );
+                            })}
                     </div>
                 )}
             </div>

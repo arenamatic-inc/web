@@ -42,27 +42,46 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const refreshAuth = () => {
     const idTokenRaw = localStorage.getItem("id_token");
     const access = localStorage.getItem("access_token");
+  
     if (idTokenRaw && access) {
       try {
         const decoded = JSON.parse(atob(idTokenRaw.split(".")[1]));
+        const now = Math.floor(Date.now() / 1000);
+        if (decoded.exp && decoded.exp < now) {
+          console.warn("ID token expired");
+          // Clear state silently
+          localStorage.removeItem("id_token");
+          localStorage.removeItem("access_token");
+          localStorage.removeItem("pkce_verifier");
+          setUser(null);
+          setAccessToken(null);
+          setIdToken(null);
+          setPermissions(null);
+          return;
+        }
+  
         setUser(decoded);
         setAccessToken(access);
         setIdToken(idTokenRaw);
       } catch (err) {
         console.error("Invalid token", err);
+        // same silent clear
+        localStorage.removeItem("id_token");
+        localStorage.removeItem("access_token");
+        localStorage.removeItem("pkce_verifier");
         setUser(null);
         setAccessToken(null);
         setIdToken(null);
-        setPermissions(null); 
+        setPermissions(null);
       }
     } else {
       setUser(null);
       setAccessToken(null);
       setIdToken(null);
-      setPermissions(null); 
+      setPermissions(null);
     }
   };
-
+  
   useEffect(() => {
     if (!idToken) return;
   
