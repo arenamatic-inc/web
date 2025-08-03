@@ -12,16 +12,13 @@ import ArenamaticLanding from './pages/ArenamaticLanding';
 import RoomActivityPage from './pages/admin/RoomActivity';
 import { ADMIN_MENU_ITEMS } from "./constants/adminMenu";
 import RequirePermission from './auth/RequirePermission';
+import RefreshHelper from './pages/RefreshHelper';
 
-const adminRoutes = ADMIN_MENU_ITEMS.map(({ path, requiredPermission, component: Component }) => (
+const adminRoutes = ADMIN_MENU_ITEMS.map(({ path, element }) => (
   <Route
     key={path}
     path={path}
-    element={
-      <RequirePermission permission={requiredPermission}>
-        <Component />
-      </RequirePermission>
-    }
+    element={element()}
   />
 ));
 
@@ -44,6 +41,7 @@ function App() {
   if (isArenamaticSite) {
     routeElements = (
       <>
+        <Route path="/features/streaming" element={<ArenamaticLanding />} />
         <Route path="*" element={<ArenamaticLanding />} />
       </>
     );
@@ -54,6 +52,7 @@ function App() {
         <Route path="/logout/callback" element={<LogoutCallback />} />
         <Route path="/login" element={<Login />} />
         <Route path="/logout" element={<Logout />} />
+        <Route path="/refresh-helper" element={<RefreshHelper />} />
         <Route path="*" element={<div className="p-8 text-white">Unknown auth route</div>} />
       </>
     );

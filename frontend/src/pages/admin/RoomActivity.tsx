@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useAuth } from "../../auth/useAuth";
-import PageLayout from "../../PageLayout";
+import { AdminTabLayout } from "../admin/AdminTabLayout";
+import { AdminTable } from "../admin/AdminTable";
 import { getRoomSlug } from "../../utils/roomSlug";
 
 import {
@@ -12,6 +13,7 @@ import {
     flexRender,
     SortingState,
 } from "@tanstack/react-table";
+import { AdminPageProps } from "../../constants/adminMenu";
 
 export type MatchRow = {
     table_name: string;
@@ -28,7 +30,7 @@ export type DoorEventRow = {
     user_name: string;
 };
 
-export default function RoomActivityPage() {
+export default function RoomActivityPage({ requiredPermission }: AdminPageProps) {
     const { permissions, idToken } = useAuth();
     const [matchData, setMatchData] = useState<MatchRow[]>([]);
     const [doorData, setDoorData] = useState<DoorEventRow[]>([]);
@@ -42,16 +44,18 @@ export default function RoomActivityPage() {
     const [matchBefore, setMatchBefore] = useState<string | null>(null);
     const [doorBefore, setDoorBefore] = useState<string | null>(null);
 
-    const hasPermission = permissions?.room_permissions.includes("RoomReadActivity");
-
-    const loadData = async (append = false) => {
+    const loadData = async (append = false, matchBeforeParam: string | null = null, doorBeforeParam: string | null = null) => {
+        if (!append) {
+            setMatchBefore(null);
+            setDoorBefore(null);
+        }
         setLoading(true);
         setError("");
         try {
             const slug = await getRoomSlug();
             if (!slug) throw new Error("Room slug not found");
 
-            const matchRes = await fetch(`${import.meta.env.VITE_API_BASE}/web/admin/recent-matches/${slug}?limit=50${matchBefore ? `&before=${matchBefore}` : ""}`, {
+            const matchRes = await fetch(`${import.meta.env.VITE_API_BASE}/web/admin/recent-matches/${slug}?limit=50${matchBeforeParam ? `&before=${matchBeforeParam}` : ""}`, {
                 headers: {
                     Authorization: `Bearer ${idToken}`,
                     "x-api-key": import.meta.env.VITE_API_KEY,
@@ -66,7 +70,7 @@ export default function RoomActivityPage() {
                 setMatchBefore(new Date(oldest - 1000).toISOString());
             }
 
-            const doorRes = await fetch(`${import.meta.env.VITE_API_BASE}/web/admin/door-events/${slug}?limit=50${doorBefore ? `&before=${doorBefore}` : ""}`, {
+            const doorRes = await fetch(`${import.meta.env.VITE_API_BASE}/web/admin/door-events/${slug}?limit=50${doorBeforeParam ? `&before=${doorBeforeParam}` : ""}`, {
                 headers: {
                     Authorization: `Bearer ${idToken}`,
                     "x-api-key": import.meta.env.VITE_API_KEY,
@@ -99,9 +103,11 @@ export default function RoomActivityPage() {
     };
 
     useEffect(() => {
-        loadData();
-    }, []);
-
+        if (idToken) {
+            loadData(false);
+        }
+    }, [idToken]);
+    
     const filterFn = <T extends object>(row: any, _: unknown, filterValue: string) => {
         return Object.values(row.original).some((value) => {
             if (typeof value === "string") return value.toLowerCase().includes(filterValue.toLowerCase());
@@ -146,205 +152,92 @@ export default function RoomActivityPage() {
         { accessorKey: "user_name", header: "User" },
     ];
 
-    const matchTable = useReactTable({
-        data: matchData,
-        columns: matchColumns,
-        state: { sorting: sortingMatches, globalFilter: globalFilterMatches },
-        onSortingChange: setSortingMatches,
-        onGlobalFilterChange: setGlobalFilterMatches,
-        getCoreRowModel: getCoreRowModel(),
-        getSortedRowModel: getSortedRowModel(),
-        getFilteredRowModel: getFilteredRowModel(),
-        globalFilterFn: filterFn,
-    });
-
-    const doorTable = useReactTable({
-        data: doorData,
-        columns: doorColumns,
-        state: { sorting: sortingDoors, globalFilter: globalFilterDoors },
-        onSortingChange: setSortingDoors,
-        onGlobalFilterChange: setGlobalFilterDoors,
-        getCoreRowModel: getCoreRowModel(),
-        getSortedRowModel: getSortedRowModel(),
-        getFilteredRowModel: getFilteredRowModel(),
-        globalFilterFn: filterFn,
-    });
-
     return (
-        <PageLayout>
-            <div className="p-8 text-white max-w-7xl mx-auto">
-                <div className="mb-4 flex justify-between items-center">
-                    <h1 className="text-2xl font-bold">Room Activity</h1>
-                    <button
-                        className="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-1 px-3 rounded"
-                        onClick={() => loadData(false)}
-                    >
-                        Refresh
-                    </button>
-                </div>
-
-                <div className="mb-6 flex space-x-4">
-                    <button
-                        onClick={() => setActiveTab("matches")}
-                        className={`py-1 px-4 rounded ${activeTab === "matches" ? "bg-blue-600" : "bg-gray-700"}`}
-                    >
-                        Room Activity
-                    </button>
-                    <button
-                        onClick={() => setActiveTab("doors")}
-                        className={`py-1 px-4 rounded ${activeTab === "doors" ? "bg-blue-600" : "bg-gray-700"}`}
-                    >
-                        Door Access
-                    </button>
-                    <button
-                        onClick={() => setActiveTab("streams")}
-                        className={`py-1 px-4 rounded ${activeTab === "streams" ? "bg-blue-600" : "bg-gray-700"}`}
-                    >
-                        Streams
-                    </button>
-                </div>
-
-                {loading && <div>Loading...</div>}
-                {error && <div className="text-red-400">Error: {error}</div>}
-
-                <input
-                    type="text"
-                    value={activeTab === "matches" ? globalFilterMatches : globalFilterDoors}
-                    onChange={(e) =>
-                        activeTab === "matches"
-                            ? setGlobalFilterMatches(e.target.value)
-                            : setGlobalFilterDoors(e.target.value)
-                    }
-                    placeholder="Search..."
-                    className="mb-4 px-2 py-1 rounded border border-gray-600 bg-gray-900 text-white"
-                />
-
-                {activeTab === "matches" && (
-                    <div className="overflow-x-auto border border-white/30 bg-black/20 backdrop-blur-sm rounded p-4">
-                        <h2 className="text-xl font-semibold mb-4">Recent Matches</h2>
-                        <table className="min-w-full text-sm">
-                            <thead>
-                                {matchTable.getHeaderGroups().map((headerGroup) => (
-                                    <tr key={headerGroup.id}>
-                                        {headerGroup.headers.map((header) => (
-                                            <th
-                                                key={header.id}
-                                                className="p-2 text-left font-bold cursor-pointer"
-                                                onClick={header.column.getToggleSortingHandler()}
-                                            >
-                                                {flexRender(header.column.columnDef.header, header.getContext())}
-                                                {{ asc: " ▲", desc: " ▼" }[header.column.getIsSorted() as string] ?? null}
-                                            </th>
-                                        ))}
-                                    </tr>
-                                ))}
-                            </thead>
-                            <tbody>
-                                {matchTable.getRowModel().rows.map((row) => (
-                                    <tr key={row.id} className="border-t border-white/10">
-                                        {row.getVisibleCells().map((cell) => (
-                                            <td key={cell.id} className="p-2">
-                                                {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                                            </td>
-                                        ))}
-                                    </tr>
-                                ))}
-                            </tbody>
-                        </table>
-                        <div className="mt-4 text-center">
-                            <button
-                                className="bg-gray-700 hover:bg-gray-600 text-white py-1 px-3 rounded"
-                                onClick={() => loadData(true)}
-                            >
-                                Load More
-                            </button>
-                        </div>
-                    </div>
-                )}
-
-                {activeTab === "doors" && (
-                    <div className="overflow-x-auto border border-white/30 bg-black/20 backdrop-blur-sm rounded p-4">
-                        <h2 className="text-xl font-semibold mb-4">Door Open Events</h2>
-                        <table className="min-w-full text-sm">
-                            <thead>
-                                {doorTable.getHeaderGroups().map((headerGroup) => (
-                                    <tr key={headerGroup.id}>
-                                        {headerGroup.headers.map((header) => (
-                                            <th
-                                                key={header.id}
-                                                className="p-2 text-left font-bold cursor-pointer"
-                                                onClick={header.column.getToggleSortingHandler()}
-                                            >
-                                                {flexRender(header.column.columnDef.header, header.getContext())}
-                                                {{ asc: " ▲", desc: " ▼" }[header.column.getIsSorted() as string] ?? null}
-                                            </th>
-                                        ))}
-                                    </tr>
-                                ))}
-                            </thead>
-                            <tbody>
-                                {doorTable.getRowModel().rows.map((row) => (
-                                    <tr key={row.id} className="border-t border-white/10">
-                                        {row.getVisibleCells().map((cell) => (
-                                            <td key={cell.id} className="p-2">
-                                                {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                                            </td>
-                                        ))}
-                                    </tr>
-                                ))}
-                            </tbody>
-                        </table>
-                        <div className="mt-4 text-center">
-                            <button
-                                className="bg-gray-700 hover:bg-gray-600 text-white py-1 px-3 rounded"
-                                onClick={() => loadData(true)}
-                            >
-                                Load More
-                            </button>
-                        </div>
-                    </div>
-                )}
-                {activeTab === "streams" && (
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                        {Object.entries(
-                            matchData.reduce((acc, match) => {
-                                if (!acc[match.table_name]) {
-                                    acc[match.table_name] = match;
-                                } else if (new Date(match.start) > new Date(acc[match.table_name].start)) {
-                                    acc[match.table_name] = match;
-                                }
-                                return acc;
-                            }, {} as Record<string, MatchRow>)
-                        ).sort(([a], [b]) => a.localeCompare(b))
-                            .map(([tableName, match]) => {
-                                const valid = match.broadcast_id && ["live", "ended", "bound"].includes(match.stream_status ?? "");
-                                return (
-                                    <div
-                                        key={tableName}
-                                        className="bg-black/20 border border-white/30 backdrop-blur-sm rounded p-4"
-                                    >
-                                        <div className="mb-2 font-bold text-white">{tableName}</div>
-                                        <div className="aspect-video">
-                                            {valid ? (
-                                                <iframe
-                                                    src={`https://www.youtube.com/embed/${match.broadcast_id}?autoplay=1&mute=1`}
-                                                    allow="autoplay; encrypted-media"
-                                                    allowFullScreen
-                                                    title={tableName}
-                                                    className="w-full h-full rounded"
-                                                />
-                                            ) : (
-                                                <div className="w-full h-full flex items-center justify-center bg-gray-800 text-gray-400 rounded">
-                                                    No stream available
-                                                </div>
-                                            )}
+        <AdminTabLayout
+            title="Room Activity"
+            requiredPermission={requiredPermission}
+            activeTab={activeTab}
+            setActiveTab={setActiveTab}
+            onRefresh={() => loadData(false)}
+            tabs={[
+                {
+                    id: "matches",
+                    label: "Room Activity",
+                    content: (
+                        <AdminTable
+                            title="Recent Matches"
+                            data={matchData}
+                            columns={matchColumns}
+                            sorting={sortingMatches}
+                            setSorting={setSortingMatches}
+                            globalFilter={globalFilterMatches}
+                            setGlobalFilter={setGlobalFilterMatches}
+                            onLoadMore={() => loadData(true, matchBefore, doorBefore)}
+                        />
+                    ),
+                },
+                {
+                    id: "doors",
+                    label: "Door Access",
+                    content: (
+                        <AdminTable
+                            title="Door Open Events"
+                            data={doorData}
+                            columns={doorColumns}
+                            sorting={sortingDoors}
+                            setSorting={setSortingDoors}
+                            globalFilter={globalFilterDoors}
+                            setGlobalFilter={setGlobalFilterDoors}
+                            onLoadMore={() => loadData(true, matchBefore, doorBefore)}
+                        />
+                    ),
+                },
+                {
+                    id: "streams",
+                    label: "Streams",
+                    content: (
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            {Object.entries(
+                                matchData.reduce((acc, match) => {
+                                    if (!acc[match.table_name]) {
+                                        acc[match.table_name] = match;
+                                    } else if (new Date(match.start) > new Date(acc[match.table_name].start)) {
+                                        acc[match.table_name] = match;
+                                    }
+                                    return acc;
+                                }, {} as Record<string, MatchRow>)
+                            )
+                                .sort(([a], [b]) => a.localeCompare(b))
+                                .map(([tableName, match]) => {
+                                    const valid = match.broadcast_id && ["live", "ended", "bound"].includes(match.stream_status ?? "");
+                                    return (
+                                        <div
+                                            key={tableName}
+                                            className="bg-black/20 border border-white/30 backdrop-blur-sm rounded p-4"
+                                        >
+                                            <div className="mb-2 font-bold text-white">{tableName}</div>
+                                            <div className="aspect-video">
+                                                {valid ? (
+                                                    <iframe
+                                                        src={`https://www.youtube.com/embed/${match.broadcast_id}?autoplay=1&mute=1`}
+                                                        allow="autoplay; encrypted-media"
+                                                        allowFullScreen
+                                                        title={tableName}
+                                                        className="w-full h-full rounded"
+                                                    />
+                                                ) : (
+                                                    <div className="w-full h-full flex items-center justify-center bg-gray-800 text-gray-400 rounded">
+                                                        No stream available
+                                                    </div>
+                                                )}
+                                            </div>
                                         </div>
-                                    </div>
-                                );
-                            })}
-                    </div>
-                )}
-            </div>
-        </PageLayout>
+                                    );
+                                })}
+                        </div>
+                    ),
+                },
+            ]}
+        />
     );
 }

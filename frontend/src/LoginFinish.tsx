@@ -22,8 +22,8 @@ export default function LoginFinish() {
             console.error("[LoginFinish] Missing token(s)");
         }
 
-        setTimeout(() => navigate("/"), 100);
-
+        setTimeout(() => navigate("/"), 100); 
+  
     }, []);
 
     return (
