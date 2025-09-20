@@ -10,9 +10,16 @@ import LeaguePage from './LeaguePage';
 import Logout from './auth/Logout';
 import ArenamaticLanding from './pages/ArenamaticLanding';
 import RoomActivityPage from './pages/admin/RoomActivity';
-import { ADMIN_MENU_ITEMS } from "./constants/adminMenu";
+import { ADMIN_MENU_ITEMS, ARENAMATIC_ADMIN_MENU_ITEMS } from "./constants/adminMenu";
 import RequirePermission from './auth/RequirePermission';
 import RefreshHelper from './pages/RefreshHelper';
+import ArenamaticStreaming from './pages/StreamingFeature';
+import Privacy from './pages/Privacy';
+import ArenamaticAdmin from './pages/admin/ArenamaticAdmin';
+
+const arenamaticAdminRoutes = ARENAMATIC_ADMIN_MENU_ITEMS.map(({ path, element }) => (
+  <Route key={path} path={path} element={element()} />
+));
 
 const adminRoutes = ADMIN_MENU_ITEMS.map(({ path, element }) => (
   <Route
@@ -36,12 +43,17 @@ function App() {
   console.log("Expected auth host:", import.meta.env.VITE_AUTH_HOST);
   console.log("Expected arenamatic host:", import.meta.env.VITE_ARENAMATIC_HOST);
 
+  console.log('arenamaticAdminRoutes:', arenamaticAdminRoutes);
+  
   let routeElements;
 
   if (isArenamaticSite) {
     routeElements = (
       <>
-        <Route path="/features/streaming" element={<ArenamaticLanding />} />
+        <Route path="/features/streaming" element={<ArenamaticStreaming />} />
+        <Route path="/admin" element={<ArenamaticAdmin />} />
+        {arenamaticAdminRoutes}
+        <Route path="/login/finish" element={<LoginFinish />} />
         <Route path="*" element={<ArenamaticLanding />} />
       </>
     );
@@ -63,6 +75,7 @@ function App() {
         <Route path="/login/finish" element={<LoginFinish />} />
         <Route path="/account" element={<Account />} />
         <Route path="/leagues" element={<LeaguePage />} />
+        <Route path="/privacy" element={<Privacy />} />
         {adminRoutes}
         <Route path="*" element={<div className="p-8">Page not found</div>} />
       </>

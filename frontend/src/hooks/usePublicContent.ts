@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useSite } from "../SiteContext";
 
 export type WebPublicContent = {
   name: string;
@@ -16,8 +17,13 @@ export type WebPublicContent = {
 
 export function usePublicContent() {
   const [publicContent, setPublicContent] = useState<WebPublicContent | null>(null);
+  const { isArenamaticSite } = useSite();
 
   useEffect(() => {
+    if (isArenamaticSite) {
+      return; // Skip fetch — no public content for arenamatic.ca
+    }
+
     fetch(`${import.meta.env.VITE_API_BASE}/web/public_content`, {
       headers: {
         "X-Club-Host": window.location.hostname,
@@ -26,7 +32,7 @@ export function usePublicContent() {
       .then((res) => res.json())
       .then(setPublicContent)
       .catch(console.error);
-  }, []);
+  }, [isArenamaticSite]);
 
   return { publicContent };
 }

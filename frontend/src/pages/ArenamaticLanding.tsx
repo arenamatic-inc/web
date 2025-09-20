@@ -1,6 +1,17 @@
-import React from "react";
+import React, { useEffect } from "react";
 
 export default function ArenamaticLanding() {
+    useEffect(() => {
+        // Update favicon for Arenamatic
+        // Update page title
+        document.title = "Arenamatic";
+        const favicon = document.querySelector("link[rel='icon']") || document.createElement("link");
+        favicon.setAttribute("rel", "icon");
+        favicon.setAttribute("href", "https://d2o72uxgym8vs9.cloudfront.net/arenamatic/arenamatic_favicon.png");
+        document.head.appendChild(favicon);
+
+    }, []);
+
     return (
         <div className="min-h-screen bg-white text-gray-900 font-sans">
             {/* Hero Section */}

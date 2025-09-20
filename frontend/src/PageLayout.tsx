@@ -19,6 +19,10 @@ export default function PageLayout({ children }: PageLayoutProps) {
         if (publicContent?.name) {
             document.title = publicContent.name;
         }
+        const favicon = document.querySelector("link[rel='icon']") || document.createElement("link");
+        favicon.setAttribute("rel", "icon");
+        favicon.setAttribute("href", "https://d2o72uxgym8vs9.cloudfront.net/arenamatic/arenamatic_favicon.png");
+        document.head.appendChild(favicon);
     }, [publicContent]);
 
     return (

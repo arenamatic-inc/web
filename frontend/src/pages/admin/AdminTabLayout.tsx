@@ -28,8 +28,21 @@ export function AdminTabLayout<T extends string>({
     const navigate = useNavigate();
 
     useEffect(() => {
+        console.log("[AdminTabLayout] Checking room permission", {
+            requiredPermission,
+            permissions
+        });
+
+        if (!permissions || permissions.room_permissions === undefined) return;
+
+        console.log("[AdminTabLayout] Verifying permission:", requiredPermission);
+
         if (requiredPermission && permissions) {
-            const hasPermission = permissions.room_permissions.includes(requiredPermission);
+            const hasPermission =
+                permissions.global_permissions.includes(requiredPermission) ||
+                permissions.room_permissions.includes(requiredPermission) ||
+                permissions.event_permissions.includes(requiredPermission);
+
             if (!hasPermission) {
                 navigate("/", { replace: true });
             }

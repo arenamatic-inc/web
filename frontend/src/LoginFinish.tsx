@@ -4,10 +4,12 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "./auth/useAuth";
 import PageLayout from "./PageLayout";
 import { centerHeroText } from "./utils/classnames";
+import { useSite } from "./SiteContext";
 
 export default function LoginFinish() {
     const { refreshAuth } = useAuth();
     const navigate = useNavigate();
+    const { isArenamaticSite } = useSite();
 
     useEffect(() => {
         const hash = new URLSearchParams(window.location.hash.slice(1));
@@ -22,7 +24,9 @@ export default function LoginFinish() {
             console.error("[LoginFinish] Missing token(s)");
         }
 
-        setTimeout(() => navigate("/"), 100); 
+    setTimeout(() => {
+        navigate(isArenamaticSite ? "/admin" : "/");
+    }, 100);
   
     }, []);
 
