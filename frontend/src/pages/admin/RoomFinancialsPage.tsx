@@ -102,14 +102,14 @@ export default function RoomFinancialsPage({ requiredPermission }: RoomFinancial
         { accessorKey: "date", header: "Date", cell: info => formatShortDateTime(info.getValue() as string) },
         { accessorKey: "user", header: "User" },
         { accessorKey: "type", header: "Type", cell: info => (info.getValue() === "spend" ? "Spend" : "Refund") },
-        { accessorKey: "amount", header: "Amount", cell: info => formatCurrency((info.getValue() as number) / 100) },
+        { accessorKey: "amount", header: "Sale", cell: info => formatCurrency((info.getValue() as number) / 100) },
         { accessorKey: "tax", header: "Tax", cell: info => info.getValue() ? formatCurrency((info.getValue() as number) / 100) : "" },
         { accessorKey: "bonus_spend", header: "Bonus Used", cell: info => info.getValue() ? formatCurrency((info.getValue() as number) / 100) : "" },
         { accessorKey: "room_spend", header: "Room Wallet", cell: info => info.getValue() ? formatCurrency((info.getValue() as number) / 100) : "" },
         { accessorKey: "arenamatic_spend", header: "Arena Wallet", cell: info => info.getValue() ? formatCurrency((info.getValue() as number) / 100) : "" },
         { accessorKey: "arenamatic_fee", header: "Platform Fee", cell: info => info.getValue() ? formatCurrency((info.getValue() as number) / 100) : "" },
         { accessorKey: "processing_fee", header: "Processing Fee", cell: info => info.getValue() ? formatCurrency((info.getValue() as number) / 100) : "" },
-        { accessorKey: "revenue", header: "Revenue", cell: info => info.getValue() ? formatCurrency((info.getValue() as number) / 100) : "" },
+        // { accessorKey: "revenue", header: "Revenue", cell: info => info.getValue() ? formatCurrency((info.getValue() as number) / 100) : "" },
         // { accessorKey: "due_to_club", header: "Due to Club", cell: info => info.getValue() ? formatCurrency((info.getValue() as number) / 100) : "" },
         // { accessorKey: "note", header: "Note" },
     ];
@@ -200,14 +200,12 @@ export default function RoomFinancialsPage({ requiredPermission }: RoomFinancial
                                         <Row label="Total Sales:" value={formatCurrency(((summary?.room_wallet_spend_cents ?? 0) - (summary?.tax_collected_cents ?? 0) + (summary?.arenamatic_tax_collected ?? 0)) / 100)} />
                                         <Row label="Tax Collected:" value={formatCurrency(((summary?.tax_collected_cents ?? 0) - (summary?.arenamatic_tax_collected ?? 0)) / 100)} />
                                         <Row label="Player Spend:" value={formatCurrency((summary?.room_wallet_spend_cents ?? 0) / 100)} />
-                                        <Row label="Room Revenue Share:" value={formatCurrency(((summary?.room_revenue_cents ?? 0) - (summary?.room_revenue_from_arenamatic_cents ?? 0)) / 100)} />
                                         <Row label="Arenamatic Fees:" value={formatCurrency((summary?.arenamatic_fees_from_room_wallet ?? 0) / 100)} />
                                     </Section>
                                     <Section title="Global Wallets">
                                         <Row label="Total Sales:" value={formatCurrency(((summary?.arenamatic_wallet_spend_cents ?? 0) - (summary?.arenamatic_tax_collected ?? 0)) / 100)} />
                                         <Row label="Tax Collected:" value={formatCurrency(((summary?.arenamatic_tax_collected ?? 0)) / 100)} />
                                         <Row label="Player Spend:" value={formatCurrency((summary?.arenamatic_wallet_spend_cents ?? 0) / 100)} />
-                                        <Row label="Room Revenue Share:" value={formatCurrency(((summary?.room_revenue_from_arenamatic_cents ?? 0)) / 100)} />
                                         <Row label="Arenamatic Fees:" value={formatCurrency(((summary?.arenamatic_fee_cents ?? 0) - (summary?.arenamatic_fees_from_room_wallet ?? 0)) / 100)} />
                                         <Row label="Processing Fees:" value={formatCurrency(((summary?.stripe_clawback_cents ?? 0)) / 100)} />
                                     </Section>
@@ -237,8 +235,12 @@ export default function RoomFinancialsPage({ requiredPermission }: RoomFinancial
 
                                     <Section title="Settlement">
                                         <Section title="Due to room">
-                                            <Row label="Room Revenue Share:" value={formatCurrency((summary?.room_revenue_from_arenamatic_cents ?? 0) / 100)} />
-                                            <Row label="Tax Collected:" value={formatCurrency((summary?.arenamatic_tax_collected ?? 0) / 100)} />
+                                            <Row label="Sales:" value={formatCurrency(((summary?.arenamatic_wallet_spend_cents ?? 0) - (summary?.arenamatic_tax_collected ?? 0)) / 100)} />
+                                            <Row label="+ Tax Collected:" value={formatCurrency((summary?.arenamatic_tax_collected ?? 0) / 100)} />
+                                            <Row label="- Arenamatic Fees:" value={formatCurrency(((summary?.arenamatic_fee_cents ?? 0) - (summary?.arenamatic_fees_from_room_wallet ?? 0)) / 100)} />
+                                            <Row label="- Processing Fees:" value={formatCurrency(((summary?.stripe_clawback_cents ?? 0)) / 100)} />
+                                            <Row label="= Total Due to Room:" value={formatCurrency((((summary?.arenamatic_wallet_spend_cents ?? 0) + (summary?.arenamatic_tax_collected ?? 0)) - ((summary?.arenamatic_fee_cents ?? 0) - (summary?.arenamatic_fees_from_room_wallet ?? 0)) - ((summary?.stripe_clawback_cents ?? 0))) / 100)} color={(((summary?.arenamatic_wallet_spend_cents ?? 0) - (summary?.arenamatic_tax_collected ?? 0)) - ((summary?.arenamatic_fee_cents ?? 0) - (summary?.arenamatic_fees_from_room_wallet ?? 0)) - ((summary?.stripe_clawback_cents ?? 0))) < 0 ? "text-green-400" : ""} />
+
                                         </Section>
                                         <Section title="Due to Arenamatic">
                                             <Row label="Arenamatic Fees:" value={formatCurrency((summary?.arenamatic_fees_from_room_wallet ?? 0) / 100)} />
