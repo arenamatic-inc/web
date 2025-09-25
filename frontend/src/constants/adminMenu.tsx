@@ -2,6 +2,7 @@ import { JSX } from "react";
 import RoomActivityPage from "../pages/admin/RoomActivity";
 import RoomFeeAdminPage from "../pages/admin/RoomFeeAdmin";
 import RoomFinancialsPage from "../pages/admin/RoomFinancialsPage";
+import RoomAdminPage from "../pages/admin/RoomAdminPage";
 
 export type AdminPageProps = {
   requiredPermission: string;
@@ -40,4 +41,11 @@ export const ARENAMATIC_ADMIN_MENU_ITEMS: AdminMenuItem[] = [
     requiredPermission: "GlobalManageRoomFees",
     element: () => <RoomFeeAdminPage />,
   },
+  {
+    path: "/admin/room-config",
+    label: "Room",
+    requiredPermission: "GlobalManageRooms",
+    element: () => <RoomAdminPage />,
+  }
+
 ];

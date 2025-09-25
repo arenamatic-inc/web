@@ -4,6 +4,7 @@ import { useSite } from "../../SiteContext";
 import { AdminTabLayout } from "../admin/AdminTabLayout";
 import { RoomFeeScheduleIn, RoomFeeScheduleOut } from "../../types/fees";
 import { RoomFeeForm } from "../../components/RoomFeeForm";
+import { RoomSelector } from "../../components/RoomSelector";
 
 type RoomOption = {
     id: number;
@@ -117,20 +118,14 @@ export default function RoomFeeAdminPage() {
                             {isArenamaticSite && (
                                 <div className="mb-4">
                                     <label className="block font-medium text-sm mb-1 text-white">Select Room:</label>
-                                    <select
-                                        value={roomSlug || ""}
-                                        onChange={(e) => setRoomSlug(e.target.value)}
-                                        className="border px-3 py-1 rounded"
-                                    >
-                                        <option value="" disabled>
-                                            -- Choose a room --
-                                        </option>
-                                        {roomOptions.map((room) => (
-                                            <option key={room.id} value={room.slug}>
-                                                {room.name} - {room.slug}
-                                            </option>
-                                        ))}
-                                    </select>
+                                    {isArenamaticSite && (
+                                        <div className="mb-4">
+                                            <RoomSelector
+                                                value={roomSlug}
+                                                onChange={setRoomSlug}
+                                            />
+                                        </div>
+                                    )}
                                 </div>
                             )}
 
