@@ -1,6 +1,13 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useAuth } from "../auth/useAuth";
 import { TimezonePicker } from "./TimezonePicker"; // <-- import
+import { RoomIPEditor } from "./RoomIPEditor";
+
+type RoomIP = {
+  id: number;
+  room_id: number;
+  ip: string;
+};
 
 type Room = {
   id: number;
@@ -11,7 +18,7 @@ type Room = {
   email?: string;
   show_in_app?: boolean;
   enable_web?: boolean;
-  // Add more as needed
+  ips?: RoomIP[];
 };
 
 type Props = {
@@ -25,6 +32,22 @@ export function RoomConfigForm({ room, onSaved }: Props) {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState(false);
+
+
+  const [ips, setIps] = useState<RoomIP[]>(room.ips || []);
+
+  useEffect(() => {
+    if (!room.ips) {
+      fetch(
+        `${import.meta.env.VITE_API_BASE}/room/admin/${room.slug}/ip`,
+        {
+          headers: { Authorization: `Bearer ${idToken}` },
+        }
+      )
+        .then(res => res.json())
+        .then(setIps);
+    }
+  }, [room.slug, idToken]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value, type, checked } = e.target;
@@ -127,6 +150,9 @@ export function RoomConfigForm({ room, onSaved }: Props) {
           />
           Enable Web
         </label>
+      </div>
+      <div>
+        <RoomIPEditor roomSlug={room.slug} ips={ips} onChanged={setIps} />
       </div>
       {error && <div className="text-red-600">{error}</div>}
       {success && <div className="text-green-600">Changes saved!</div>}
