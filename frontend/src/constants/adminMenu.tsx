@@ -46,6 +46,11 @@ export const ARENAMATIC_ADMIN_MENU_ITEMS: AdminMenuItem[] = [
     label: "Room",
     requiredPermission: "GlobalManageRooms",
     element: () => <RoomAdminPage />,
+  },
+  {
+    path: "/admin/room-financials",
+    label: "Room Financials",
+    requiredPermission: "GlobalReadRoomFinancials",
+    element: () => <RoomFinancialsPage requiredPermission="GlobalRoomReadFinancials" enableRoomSelector={true} />,
   }
-
 ];

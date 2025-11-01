@@ -1,6 +1,6 @@
 // types/webFinancials.ts
 export type RevenueTypeSummary = {
-    room_revenue_cents: number;
+    sales_cents: number;
     tax_collected_cents: number;
     arenamatic_fee_cents: number;
     stripe_clawback_cents: number;
@@ -56,19 +56,20 @@ export type RoomFinancialSummary = {
 };
 
 export type RoomTransactionRow = {
-    date: string;               // ISO timestamp
-    user: string;               // display name or user ID
+    date: string;
+    user: string;
     type: "spend" | "refund";
-    amount: number;             // tax-excluded, in cents
-    tax?: number | null;        // in cents
+    amount: number;
+    tax?: number | null;
     bonus_spend?: number | null;
     room_spend?: number | null;
     arenamatic_spend?: number | null;
     arenamatic_fee?: number | null;
     processing_fee?: number | null;
-    revenue?: number | null;        // club recognized revenue, in cents
-    due_to_club?: number | null;    // revenue + tax, in cents
-    note: string;               // memo, can be empty string
+    revenue?: number | null;
+    revenue_type?: string | null;
+    due_to_club?: number | null;
+    note: string;
 };
 
 
