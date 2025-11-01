@@ -180,37 +180,34 @@ export default function RoomFinancialsPage({
         }
     };
 
-    // if (enableRoomSelector) {
-    //     return (
-    //         <div className="max-w-2xl mx-auto py-12">
-    //             <RoomSelector value={slug} onChange={setSlug} />
-    //             <div className="text-gray-400 mt-4">Please select a room to view financials.</div>
-    //         </div>
-    //     );
-    // }
+    if (!enableRoomSelector && slug === null) {
+        return <div className="text-gray-400 mt-20 text-center">Loading club info...</div>;
+    }
 
-    // --- Render ---
     return (
         <div>
-            {enableRoomSelector && (
+            {enableRoomSelector ? (
                 <div className="mb-6 max-w-2xl mx-auto mt-20">
-                    <RoomSelector value={slug} onChange={setSlug} />
+                    <RoomSelector value={slug ?? ""} onChange={setSlug} />
                     {!slug && (
                         <div className="text-gray-400 mt-4">Please select a room to view financials.</div>
                     )}
                 </div>
+            ) : (
+                // Render equivalent blank space to match layout in club case
+                <div className="mt-20" />
             )}
-            {(slug) && (
-                <div>
-                    {/* Date Range Controls */}
 
+
+            {/* Date Range Controls: always render when we have a slug */}
+            {slug && (
+                <>
                     <div className="flex flex-wrap items-center gap-4 mb-4">
                         <select
                             value={startDate.slice(0, 7)}
                             onChange={e => {
                                 const [year, month] = e.target.value.split('-');
                                 setStartDate(new Date(Number(year), Number(month) - 1, 1).toISOString().slice(0, 10));
-                                // End = last day of month
                                 setEndDate(new Date(Number(year), Number(month), 0).toISOString().slice(0, 10));
                             }}
                             className="px-2 py-1 border rounded"
@@ -219,7 +216,6 @@ export default function RoomFinancialsPage({
                                 <option key={m.value} value={m.value}>{m.label}</option>
                             ))}
                         </select>
-
                         <label>
                             Start:
                             <input
@@ -239,7 +235,6 @@ export default function RoomFinancialsPage({
                             />
                         </label>
                     </div>
-
                     <AdminTabLayout
                         title="Financial Reporting"
                         requiredPermission={requiredPermission}
@@ -388,10 +383,10 @@ export default function RoomFinancialsPage({
                                     />
                                 ),
                             },
-
                         ]}
                     />
-                </div>)}
+                </>
+            )}
         </div>
     );
 }
