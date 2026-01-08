@@ -6,56 +6,53 @@ export type RevenueTypeSummary = {
     stripe_clawback_cents: number;
 };
 
-export type ArenamaticFeesBreakdown = {
-    processing_fees_cents: number; // Stripe
-    arenamatic_share_cents: number; // Your platform fee
-    total_fees_cents: number;
-};
-
-export type BonusSummary = {
-    net_granted_cents: number;
-    net_consumed_cents: number;
-    opening_outstanding_cents: number;
-    closing_outstanding_cents: number;
-};
-
 export type RoomFinancialSummary = {
     room_slug: string;
     currency: string;
-    // Totals
-    total_player_spend_cents: number;
-    room_revenue_cents: number;
-    tax_collected_cents: number;
-    arenamatic_fee_cents: number;
-    stripe_clawback_cents: number;
+    // Period info
+    period_start?: string;
+    period_end?: string;
+    year?: number;
+    month?: number;
+    week?: number;
+    quarter?: number;
 
-    // Revenue by type
-    revenue_by_type: { [key: string]: RevenueTypeSummary; };
-    fees_by_type: { [key: string]: ArenamaticFeesBreakdown };
+    // Room wallet
+    room_wallet_sales_cents: number;
+    room_wallet_tax_cents: number;
+    room_wallet_arenamatic_fees_cents: number;
 
-    // Source of spend, settlement, liabilities, etc
-    room_wallet_spend_cents: number;
-    arenamatic_wallet_spend_cents: number;
-    arenamatic_fees_due_cents: number;
-    stripe_clawback_due_cents: number; // NEW!
-    arena_wallets_due_to_club_cents: number;
-    net_due_cents: number;
-    opening_liability_cents: number;
-    net_deposits_cents: number;
-    room_wallet_spend_period_cents: number;
-    closing_liability_cents: number;
-    bonus: BonusSummary;
+    // Platform wallet
+    platform_wallet_sales_cents: number;
+    platform_wallet_tax_cents: number;
+    platform_wallet_arenamatic_fees_cents: number;
+    platform_processing_fees_cents: number;
 
-    // Reconciliation
-    room_revenue_from_arenamatic_cents: number;
-    arenamatic_tax_collected: number;
-    arenamatic_fees_from_room_wallet: number;
+    // Settlement
+    total_due_to_room_cents: number;
 
-    period_start: string; // ISO date
-    period_end: string;   // ISO date
+    // Bonus summary
+    bonus_granted_cents: number;
+    bonus_revoked_cents: number;
+    bonus_consumed_cents: number;
+    bonus_outstanding_start_cents: number;
+    bonus_outstanding_end_cents: number;
+
+    // Room user liability
+    room_user_liability_start_cents: number;
+    room_wallet_deposits_cents: number;
+    room_wallet_withdrawals_cents: number;
+    room_wallet_spend_cents: number;    // (net: spends - refunds)
+    room_user_liability_end_cents: number;
+
+    // Revenue breakdowns (optional, for UI detail)
+    room_wallet_breakdown?: { [key: string]: RevenueTypeSummary };
+    platform_wallet_breakdown?: { [key: string]: RevenueTypeSummary };
+    all_wallet_breakdown?: { [key: string]: RevenueTypeSummary };
 };
 
 export type RoomTransactionRow = {
+    id: number;
     date: string;
     user: string;
     type: "spend" | "refund";
@@ -70,6 +67,8 @@ export type RoomTransactionRow = {
     revenue_type?: string | null;
     due_to_club?: number | null;
     note: string;
+    refunded: boolean | null;
+    is_refund: boolean | null;
 };
 
 
@@ -181,3 +180,25 @@ export interface StripeSummary {
     period_start: string;
     period_end: string;
 }
+
+export type RoomFinancialsMonthlyRow = {
+    year: number;
+    month: number;
+    period_start: string; // ISO
+    period_end: string;   // ISO
+    sales_platform_cents: number;
+    sales_room_cents: number;
+    sales_total_cents: number;
+    tax_platform_cents: number;
+    tax_room_cents: number;
+    tax_total_cents: number;
+    arenamatic_fees_platform_cents: number;
+    arenamatic_fees_room_cents: number;
+    arenamatic_fees_total_cents: number;
+    processing_fees_cents: number;
+    net_cents: number;
+};
+
+export type RoomFinancialsMonthlySummaryResponse = {
+    months: RoomFinancialsMonthlyRow[];
+};

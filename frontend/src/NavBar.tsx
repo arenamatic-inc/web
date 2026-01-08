@@ -46,6 +46,7 @@ export default function NavBar() {
         <div className="space-x-6 text-sm font-medium flex items-center">
           <a href="/" className="hover:text-red-400">Home</a>
           <a href="/leagues" className="hover:text-red-400">Leagues</a>
+          <a href="/faq" className="hover:text-red-400">FAQ</a>
 
           {showAdmin && (
             <div className="relative inline-block" ref={adminDropdownRef}>

@@ -16,6 +16,8 @@ import RefreshHelper from './pages/RefreshHelper';
 import ArenamaticStreaming from './pages/StreamingFeature';
 import Privacy from './pages/Privacy';
 import ArenamaticAdmin from './pages/admin/ArenamaticAdmin';
+import WebFaq from './pages/WebFAQ';
+import APrivacy from './pages/APrivacy';
 
 const arenamaticAdminRoutes = ARENAMATIC_ADMIN_MENU_ITEMS.map(({ path, element }) => (
   <Route key={path} path={path} element={element()} />
@@ -54,6 +56,7 @@ function App() {
         <Route path="/admin" element={<ArenamaticAdmin />} />
         {arenamaticAdminRoutes}
         <Route path="/login/finish" element={<LoginFinish />} />
+        <Route path="/privacy" element={<APrivacy />} />
         <Route path="*" element={<ArenamaticLanding />} />
       </>
     );
@@ -75,6 +78,7 @@ function App() {
         <Route path="/login/finish" element={<LoginFinish />} />
         <Route path="/account" element={<Account />} />
         <Route path="/leagues" element={<LeaguePage />} />
+        <Route path="/faq" element={<WebFaq />} />
         <Route path="/privacy" element={<Privacy />} />
         {adminRoutes}
         <Route path="*" element={<div className="p-8">Page not found</div>} />

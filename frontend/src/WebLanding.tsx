@@ -29,7 +29,7 @@ export default function WebLanding() {
         'X-Club-Host': window.location.hostname,
       },
     })
-    
+
       .then(res => res.json())
       .then((json) => {
         setData(json);
@@ -109,6 +109,18 @@ export default function WebLanding() {
                 <SiAndroid />
               </a>
             </div>
+
+            <div className="text-sm text-neutral-500 mt-4">
+              <a
+                href="https://www.arenamatic.ca"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="hover:text-neutral-300 transition-colors"
+              >
+                Powered by Arenamatic
+              </a>
+            </div>
+
           </footer>
         </div>
       </PageLayout>
