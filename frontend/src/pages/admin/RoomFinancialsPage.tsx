@@ -59,7 +59,7 @@ async function handleRefund(row: RoomTransactionRow, slug: string, idToken: stri
             "x-api-key": import.meta.env.VITE_API_KEY,
         };
 
-        const resp = await fetch(`${import.meta.env.VITE_API_BASE}/web/financials/refund/${slug}`, {
+        const resp = await fetch(`${import.meta.env.VITE_WEB_FIN_API_BASE}/web/financials/refund/${slug}`, {
             method: "POST",
             headers: headers,
             body: JSON.stringify({ original_tx_id: row.id }) // or row.tx_id or whatever key is correct
@@ -117,7 +117,7 @@ export default function RoomFinancialsPage({
                     "x-api-key": import.meta.env.VITE_API_KEY,
                 };
                 const res = await fetch(
-                    `${import.meta.env.VITE_API_BASE}/web/financials/monthly-summary/${slug}?months=24`,
+                    `${import.meta.env.VITE_WEB_FIN_API_BASE}/web/financials/monthly-summary/${slug}?months=24`,
                     { headers }
                 );
                 if (!res.ok) throw new Error(await res.text());
@@ -168,7 +168,7 @@ export default function RoomFinancialsPage({
                     "x-api-key": import.meta.env.VITE_API_KEY,
                 };
                 const summaryRes = await fetch(
-                    `${import.meta.env.VITE_API_BASE}/web/financials/room-summary/${slug}?start_date=${startDate}&end_date=${endDate}`,
+                    `${import.meta.env.VITE_WEB_FIN_API_BASE}/web/financials/room-summary/${slug}?start_date=${startDate}&end_date=${endDate}`,
                     { headers }
                 );
                 if (!summaryRes.ok) throw new Error(await summaryRes.text());
@@ -297,7 +297,7 @@ export default function RoomFinancialsPage({
                 "x-api-key": import.meta.env.VITE_API_KEY,
             };
             const limit = 100;
-            const url = `${import.meta.env.VITE_API_BASE}/web/financials/spend-refund/${_slug}?limit=${limit}&offset=${offset}&start_date=${start}&end_date=${end}`;
+            const url = `${import.meta.env.VITE_WEB_FIN_API_BASE}/web/financials/spend-refund/${_slug}?limit=${limit}&offset=${offset}&start_date=${start}&end_date=${end}`;
             const res = await fetch(url, { headers });
             if (!res.ok) throw new Error(await res.text());
             const newRows = await res.json();
@@ -336,7 +336,7 @@ export default function RoomFinancialsPage({
                 "x-api-key": import.meta.env.VITE_API_KEY,
             };
             const limit = 100;
-            const url = `${import.meta.env.VITE_API_BASE}/web/financials/deposits-withdrawals/${_slug}?limit=${limit}&offset=${offset}&start_date=${start}&end_date=${end}`;
+            const url = `${import.meta.env.VITE_WEB_FIN_API_BASE}/web/financials/deposits-withdrawals/${_slug}?limit=${limit}&offset=${offset}&start_date=${start}&end_date=${end}`;
             const res = await fetch(url, { headers });
             if (!res.ok) throw new Error(await res.text());
             const newRows = await res.json();
@@ -376,7 +376,7 @@ export default function RoomFinancialsPage({
                 "x-api-key": import.meta.env.VITE_API_KEY,
             };
             const limit = 100;
-            const url = `${import.meta.env.VITE_API_BASE}/web/financials/bonus-grant-revoke/${_slug}?limit=${limit}&offset=${offset}&start_date=${start}&end_date=${end}`;
+            const url = `${import.meta.env.VITE_WEB_FIN_API_BASE}/web/financials/bonus-grant-revoke/${_slug}?limit=${limit}&offset=${offset}&start_date=${start}&end_date=${end}`;
             const res = await fetch(url, { headers });
             if (!res.ok) throw new Error(await res.text());
             const newRows = await res.json();
