@@ -202,3 +202,160 @@ export type RoomFinancialsMonthlyRow = {
 export type RoomFinancialsMonthlySummaryResponse = {
     months: RoomFinancialsMonthlyRow[];
 };
+
+export type SalesPeriodRow = {
+    period_start: string;
+    period_end: string;
+    year: number;
+    month: number | null;
+    week: number | null;
+    day: number | null;
+    sales_total_cents: number;
+    sales_by_source: Record<string, number>;
+    sales_by_revenue_type: Record<string, number>;
+    closed: boolean;
+};
+
+export type SalesReportResponse = {
+    room_slug: string;
+    currency: string;
+    period: "day" | "week" | "month";
+    ending_at: string;
+    count: number;
+    rows: SalesPeriodRow[];
+};
+
+export type UserLiabilityPeriodRow = {
+    period_start: string;
+    period_end: string;
+    year: number;
+    month: number | null;
+    week: number | null;
+    day: number | null;
+    deposits_cents: number;
+    deposits_by_source: Record<string, number>;
+    withdrawals_cents: number;
+    withdrawals_by_source: Record<string, number>;
+    spend_cents: number;
+    spend_by_source: Record<string, number>;
+    refunds_cents: number;
+    refunds_by_source: Record<string, number>;
+    transfer_cents: number;
+    transfer_by_source: Record<string, number>;
+    room_liability_balance_cents?: number;
+    closed: boolean;
+};
+
+export type UserLiabilityReportResponse = {
+    room_slug: string;
+    currency: string;
+    period: "day" | "week" | "month";
+    ending_at: string;
+    count: number;
+    rows: UserLiabilityPeriodRow[];
+};
+
+export type FeeByRevenueType = {
+    revenue_type: string;
+    sales_cents: number;
+    spend_cents: number;
+    platform_fees_cents: number;
+};
+
+export type FeePeriodRow = {
+    period_start: string;
+    period_end: string;
+    year: number;
+    month: number | null;
+    week: number | null;
+    day: number | null;
+    fees_by_revenue_type: FeeByRevenueType[];
+    total_platform_spend_cents: number;
+    total_processing_fees_cents: number;
+    total_fees_cents: number;
+    closed: boolean;
+};
+
+export type FeeReportResponse = {
+    room_slug: string;
+    currency: string;
+    period: "day" | "week" | "month";
+    ending_at: string;
+    count: number;
+    rows: FeePeriodRow[];
+};
+
+export type ReconciliationPeriodRow = {
+    period_start: string;
+    period_end: string;
+    year: number;
+    month: number | null;
+    week: number | null;
+    day: number | null;
+    platform_sales_cents: number;
+    platform_tax_held_cents: number;
+    total_fees_cents: number;
+    net_to_room_cents: number;
+    closed: boolean;
+};
+
+export type ReconciliationReportResponse = {
+    room_slug: string;
+    currency: string;
+    period: "day" | "week" | "month";
+    ending_at: string;
+    count: number;
+    rows: ReconciliationPeriodRow[];
+};
+
+export type BonusPeriodRow = {
+    period_start: string;
+    period_end: string;
+    year: number;
+    month: number | null;
+    week: number | null;
+    day: number | null;
+    granted_cents: number;
+    revoked_cents: number;
+    consumed_cents: number;
+    bonus_balance_cents: number;
+    closed: boolean;
+};
+
+export type BonusReportResponse = {
+    room_slug: string;
+    currency: string;
+    period: "day" | "week" | "month";
+    ending_at: string;
+    count: number;
+    rows: BonusPeriodRow[];
+};
+
+export type PlatformLiabilityPeriodRow = {
+    period_start: string;
+    period_end: string;
+    year: number;
+    month: number | null;
+    week: number | null;
+    day: number | null;
+    deposits_cents: number;
+    deposits_by_source: Record<string, number>;
+    withdrawals_cents: number;
+    withdrawals_by_source: Record<string, number>;
+    spend_cents: number;
+    spend_by_source: Record<string, number>;
+    refunds_cents: number;
+    refunds_by_source: Record<string, number>;
+    transfer_cents: number;
+    transfer_by_source: Record<string, number>;
+    platform_liability_balance_cents?: number;
+    closed: boolean;
+};
+
+export type PlatformLiabilityReportResponse = {
+    currency: string;
+    period: "day" | "week" | "month";
+    ending_at: string;
+    count: number;
+    rows: PlatformLiabilityPeriodRow[];
+};

@@ -1,9 +1,10 @@
 import { JSX } from "react";
 import RoomActivityPage from "../pages/admin/RoomActivity";
 import RoomFeeAdminPage from "../pages/admin/RoomFeeAdmin";
-import RoomFinancialsPage from "../pages/admin/RoomFinancialsPage";
+import RoomFinancialsPage, { RoomFinancialsOldPage } from "../pages/admin/RoomFinancialsPage";
 import RoomAdminPage from "../pages/admin/RoomAdminPage";
 import FaqAdminPage from "../pages/admin/AdminFaq";
+import PlatformLiabilityPage from "../pages/admin/PlatformLiabilityPage";
 
 export type AdminPageProps = {
   requiredPermission: string;
@@ -33,12 +34,21 @@ export const ADMIN_MENU_ITEMS: AdminMenuItem[] = [
       return <RoomFinancialsPage requiredPermission="RoomGiveRefund" />;
     },
   },
-{
-  path: "/admin/faq",
-  label: "Edit FAQ",
-  requiredPermission: "RoomManageWebContent",
-  element: () => <FaqAdminPage requiredPermission="RoomManageWebContent" />,
-}
+  // Legacy tab set: comment out this block to hide.
+  {
+    path: "/admin/room-financials-old",
+    label: "Room Financials-old",
+    requiredPermission: "RoomReadFinancials",
+    element: () => {
+      return <RoomFinancialsOldPage requiredPermission="RoomGiveRefund" />;
+    },
+  },
+  {
+    path: "/admin/faq",
+    label: "Edit FAQ",
+    requiredPermission: "RoomManageWebContent",
+    element: () => <FaqAdminPage requiredPermission="RoomManageWebContent" />,
+  }
 ];
 
 export const ARENAMATIC_ADMIN_MENU_ITEMS: AdminMenuItem[] = [
@@ -57,10 +67,23 @@ export const ARENAMATIC_ADMIN_MENU_ITEMS: AdminMenuItem[] = [
   {
     path: "/admin/room-financials",
     label: "Room Financials",
-    requiredPermission: "GlobalReadRoomFinancials",
+    requiredPermission: "GlobalRoomReadFinancials",
     element: () => <RoomFinancialsPage requiredPermission="GlobalRoomReadFinancials" enableRoomSelector={true} />,
   },
-    {
+  // Legacy tab set: comment out this block to hide.
+  {
+    path: "/admin/room-financials-old",
+    label: "Room Financials-old",
+    requiredPermission: "GlobalRoomReadFinancials",
+    element: () => <RoomFinancialsOldPage requiredPermission="GlobalRoomReadFinancials" enableRoomSelector={true} />,
+  },
+  {
+    path: "/admin/platform-liability",
+    label: "Platform Liability",
+    requiredPermission: "GlobalRoomReadFinancials",
+    element: () => <PlatformLiabilityPage requiredPermission="GlobalRoomReadFinancials" />,
+  },
+  {
     path: "/admin/faq",
     label: "FAQ Editor",
     requiredPermission: "RoomManageFaq",
