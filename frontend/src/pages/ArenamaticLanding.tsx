@@ -42,6 +42,28 @@ export default function ArenamaticLanding() {
                 </p>
             </section>
 
+            {/* Demo Video */}
+            <section className="py-16 px-6 md:px-16 bg-white text-center">
+                <h2 className="text-2xl font-semibold mb-4">See Arenamatic in Action</h2>
+                <p className="text-gray-700 max-w-3xl mx-auto mb-8">
+                    A short real-world demo of the Arenamatic platform running in production.
+                </p>
+
+                <div className="max-w-5xl mx-auto rounded-xl overflow-hidden shadow">
+                    <div className="relative w-full" style={{ paddingTop: "56.25%" }}>
+                        <iframe
+                            className="absolute inset-0 w-full h-full"
+                            src="https://www.youtube-nocookie.com/embed/iRhVKSgUf5c?rel=0&loop=1&playlist=iRhVKSgUf5c"
+                            title="Arenamatic production demo"
+                            loading="lazy"
+                            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                            referrerPolicy="strict-origin-when-cross-origin"
+                            allowFullScreen
+                        />
+                    </div>
+                </div>
+            </section>
+
             {/* Three Pillars With Images */}
             <section className="py-20 px-6 md:px-16 bg-white text-center">
                 <h2 className="text-2xl font-semibold mb-12">What Arenamatic Delivers</h2>

@@ -59,6 +59,62 @@ function getISOWeek(date: Date): number {
     return Math.ceil((diffDays + 1) / 7);
 }
 
+function getRecordValue<T>(record: Record<string, T> | undefined, keys: string[]): T | undefined {
+    if (!record) return undefined;
+    for (const key of keys) {
+        const value = record[key];
+        if (value !== undefined) return value;
+    }
+    return undefined;
+}
+
+function getSourceTotalCents(row: SalesPeriodRow, source: "platform" | "room"): number {
+    const keys = source === "platform"
+        ? ["PLATFORM", "platform", "Platform"]
+        : ["ROOM", "room", "Room"];
+    return getRecordValue(row.sales_by_source, keys) ?? 0;
+}
+
+function getRevenueTypeSourceCents(
+    row: SalesPeriodRow,
+    revenueType: "TABLE_TIME" | "STREAMING",
+    source: "platform" | "room"
+): number {
+    const sourceTokens = source === "platform"
+        ? ["PLATFORM", "platform", "Platform"]
+        : ["ROOM", "room", "Room"];
+    const revenueTokens = [revenueType, revenueType.toLowerCase()];
+
+    const nestedByType = getRecordValue(
+        row.sales_by_revenue_type_and_source,
+        revenueTokens
+    ) as Record<string, number> | undefined;
+    if (nestedByType && typeof nestedByType === "object") {
+        const nestedValue = getRecordValue(nestedByType, sourceTokens);
+        if (nestedValue !== undefined) return nestedValue;
+    }
+
+    const combinedKeys: string[] = [];
+    for (const rt of revenueTokens) {
+        for (const src of sourceTokens) {
+            combinedKeys.push(
+                `${rt}_${src}`,
+                `${rt}-${src}`,
+                `${rt}:${src}`,
+                `${rt}/${src}`,
+                `${src}_${rt}`,
+                `${src}-${rt}`,
+                `${src}:${rt}`,
+                `${src}/${rt}`
+            );
+        }
+    }
+
+    return getRecordValue(row.sales_by_revenue_type, combinedKeys)
+        ?? getRecordValue(row.sales_by_source, combinedKeys)
+        ?? 0;
+}
+
 function renderSalesTrendTooltip({ active, payload }: { active?: boolean; payload?: any[] }) {
     if (!active || !payload || payload.length === 0) return null;
     const label = payload[0]?.payload?.monthLabel ?? "";
@@ -492,36 +548,82 @@ function RoomFinancialsPageBase({
         {
             id: "month",
             header: "Month",
-            cell: info => {
-                const row = info.row.original;
+            accessorFn: row => {
                 const dt = new Date(row.period_start);
                 return isNaN(dt.getTime())
                     ? "?"
                     : dt.toLocaleString("default", { month: "short", year: "numeric" });
             },
+            cell: info => info.getValue() as string,
         },
         {
             header: "Table Time",
-            id: "table_time",
-            cell: info => {
-                const v =
-                    info.row.original.sales_by_revenue_type?.TABLE_TIME ?? 0;
-                return formatCurrency(v / 100);
-            },
+            columns: [
+                {
+                    id: "table_time_platform",
+                    header: "Platform",
+                    accessorFn: row => getRevenueTypeSourceCents(row, "TABLE_TIME", "platform"),
+                    cell: info => formatCurrency((info.getValue() as number) / 100),
+                },
+                {
+                    id: "table_time_room",
+                    header: "Room",
+                    accessorFn: row => getRevenueTypeSourceCents(row, "TABLE_TIME", "room"),
+                    cell: info => formatCurrency((info.getValue() as number) / 100),
+                },
+                {
+                    id: "table_time_total",
+                    header: "Total",
+                    accessorFn: row => row.sales_by_revenue_type?.TABLE_TIME ?? 0,
+                    cell: info => formatCurrency((info.getValue() as number) / 100),
+                },
+            ],
         },
         {
             header: "Streaming",
-            id: "streaming",
-            cell: info => {
-                const v =
-                    info.row.original.sales_by_revenue_type?.STREAMING ?? 0;
-                return formatCurrency(v / 100);
-            },
+            columns: [
+                {
+                    id: "streaming_platform",
+                    header: "Platform",
+                    accessorFn: row => getRevenueTypeSourceCents(row, "STREAMING", "platform"),
+                    cell: info => formatCurrency((info.getValue() as number) / 100),
+                },
+                {
+                    id: "streaming_room",
+                    header: "Room",
+                    accessorFn: row => getRevenueTypeSourceCents(row, "STREAMING", "room"),
+                    cell: info => formatCurrency((info.getValue() as number) / 100),
+                },
+                {
+                    id: "streaming_total",
+                    header: "Total",
+                    accessorFn: row => row.sales_by_revenue_type?.STREAMING ?? 0,
+                    cell: info => formatCurrency((info.getValue() as number) / 100),
+                },
+            ],
         },
         {
             header: "Sales Total",
-            accessorKey: "sales_total_cents",
-            cell: info => formatCurrency((info.getValue() as number) / 100),
+            columns: [
+                {
+                    id: "sales_total_platform",
+                    header: "Platform",
+                    accessorFn: row => getSourceTotalCents(row, "platform"),
+                    cell: info => formatCurrency((info.getValue() as number) / 100),
+                },
+                {
+                    id: "sales_total_room",
+                    header: "Room",
+                    accessorFn: row => getSourceTotalCents(row, "room"),
+                    cell: info => formatCurrency((info.getValue() as number) / 100),
+                },
+                {
+                    id: "sales_total_all",
+                    header: "All Types / Sources",
+                    accessorKey: "sales_total_cents",
+                    cell: info => formatCurrency((info.getValue() as number) / 100),
+                },
+            ],
         },
     ];
 

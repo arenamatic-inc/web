@@ -48,24 +48,72 @@ export function AdminTable<T extends Record<string, any>>({
     });
 
     function exportTableToCsv(filename: string = "export.csv") {
-        const leafColumns = table.getAllLeafColumns();
+        const leafColumns = table.getVisibleLeafColumns();
+        const headerGroups = table.getHeaderGroups();
 
-        const headerRow = leafColumns.map(col =>
-            typeof col.columnDef.header === "string"
-                ? col.columnDef.header
-                : typeof col.columnDef.header === "function"
-                    ? ""
-                    : String(col.id)
+        const escapeCsv = (value: unknown): string => {
+            if (value === null || value === undefined) return '""';
+            let text: string;
+            if (typeof value === "string") {
+                text = value;
+            } else if (typeof value === "number" || typeof value === "boolean") {
+                text = typeof value === "number"
+                    ? (value / 100).toFixed(2)
+                    : String(value);
+            } else {
+                text = JSON.stringify(value);
+            }
+            text = text.replace(/<[^>]+>/g, "");
+            return `"${text.replace(/"/g, '""')}"`;
+        };
+
+        const getHeaderLabel = (header: unknown, fallbackId: string): string => {
+            if (typeof header === "string") return header;
+            if (typeof header === "number" || typeof header === "boolean") return String(header);
+            return fallbackId;
+        };
+
+        const headerRows: string[][] = Array.from(
+            { length: headerGroups.length },
+            () => Array(leafColumns.length).fill("")
         );
 
-        const rows: string[] = [headerRow.join(",")];
+        headerGroups.forEach((headerGroup, rowIndex) => {
+            let columnOffset = 0;
+            headerGroup.headers.forEach((header) => {
+                const startIndex = columnOffset;
+                columnOffset += header.colSpan;
+                if (header.isPlaceholder) return;
+
+                headerRows[rowIndex][startIndex] = getHeaderLabel(
+                    header.column.columnDef.header,
+                    String(header.column.id)
+                );
+            });
+        });
+
+        const rows: string[] = headerRows.map((headerRow) =>
+            headerRow.map(cell => escapeCsv(cell)).join(",")
+        );
 
         table.getRowModel().rows.forEach((row: Row<T>) => {
             const rowVals: string[] = leafColumns.map(col => {
-                let val = String(row.getValue(col.id));
-                val = '"' + val.replace(/"/g, '""') + '"';
-                val = val.replace(/<[^>]+>/g, "");
-                return val;
+                let value = row.getValue(col.id);
+                if (value === undefined) {
+                    const accessorFn = (col as any).accessorFn as ((originalRow: T, index: number) => unknown) | undefined;
+                    if (typeof accessorFn === "function") {
+                        value = accessorFn(row.original, row.index);
+                    }
+                }
+
+                if (value === undefined) {
+                    const accessorKey = (col.columnDef as any).accessorKey;
+                    if (accessorKey !== undefined && accessorKey !== null) {
+                        value = row.original[accessorKey as keyof T];
+                    }
+                }
+
+                return escapeCsv(value);
             });
             rows.push(rowVals.join(","));
         });
@@ -78,6 +126,25 @@ export function AdminTable<T extends Record<string, any>>({
         a.download = filename;
         a.click();
         URL.revokeObjectURL(url);
+    }
+
+    const leafColumns = table.getAllLeafColumns();
+    const groupBoundaryLeafIds = new Set<string>();
+    const hasMultipleHeaderRows = table.getHeaderGroups().length > 1;
+
+    for (let i = 0; i < leafColumns.length - 1; i += 1) {
+        const current = leafColumns[i] as any;
+        const next = leafColumns[i + 1] as any;
+
+        const getTopLevelId = (column: any): string => {
+            let node = column;
+            while (node?.parent) node = node.parent;
+            return String(node?.id ?? "");
+        };
+
+        if (getTopLevelId(current) !== getTopLevelId(next)) {
+            groupBoundaryLeafIds.add(String(current.id));
+        }
     }
 
     return (
@@ -104,16 +171,33 @@ export function AdminTable<T extends Record<string, any>>({
                     <thead>
                         {table.getHeaderGroups().map((headerGroup) => (
                             <tr key={headerGroup.id}>
-                                {headerGroup.headers.map((header) => (
-                                    <th
-                                        key={header.id}
-                                        className="sticky top-0 z-10 bg-gray-900/90 backdrop-blur-sm p-2 text-left font-bold cursor-pointer"
-                                        onClick={header.column.getToggleSortingHandler()}
-                                    >
-                                        {flexRender(header.column.columnDef.header, header.getContext())}
-                                        {{ asc: " ▲", desc: " ▼" }[header.column.getIsSorted() as string] ?? null}
-                                    </th>
-                                ))}
+                                {headerGroup.headers.map((header, headerIndex) => {
+                                    const isLeafHeader = header.colSpan === 1;
+                                    const hasLeafDivider = isLeafHeader && groupBoundaryLeafIds.has(String(header.column.id));
+                                    const hasTopGroupDivider =
+                                        hasMultipleHeaderRows
+                                        && header.depth === 0
+                                        && !header.isPlaceholder
+                                        && headerIndex < headerGroup.headers.length - 1;
+                                    const hasGroupDivider = hasLeafDivider || hasTopGroupDivider;
+                                    return (
+                                        <th
+                                            key={header.id}
+                                            colSpan={header.colSpan}
+                                            className={`sticky top-0 z-10 bg-gray-900/90 backdrop-blur-sm p-2 text-left font-bold ${header.isPlaceholder ? "cursor-default" : "cursor-pointer"} ${hasGroupDivider ? "border-r border-white/40" : ""}`}
+                                            onClick={header.isPlaceholder ? undefined : header.column.getToggleSortingHandler()}
+                                        >
+                                            {header.isPlaceholder
+                                                ? null
+                                                : (
+                                                    <>
+                                                        {flexRender(header.column.columnDef.header, header.getContext())}
+                                                        {{ asc: " ▲", desc: " ▼" }[header.column.getIsSorted() as string] ?? null}
+                                                    </>
+                                                )}
+                                        </th>
+                                    );
+                                })}
                             </tr>
                         ))}
                     </thead>
@@ -121,7 +205,10 @@ export function AdminTable<T extends Record<string, any>>({
                         {table.getRowModel().rows.map((row) => (
                             <tr key={row.id} className="border-t border-white/10">
                                 {row.getVisibleCells().map((cell) => (
-                                    <td key={cell.id} className="p-2">
+                                    <td
+                                        key={cell.id}
+                                        className={`p-2 ${groupBoundaryLeafIds.has(String(cell.column.id)) ? "border-r border-white/40" : ""}`}
+                                    >
                                         {flexRender(cell.column.columnDef.cell, cell.getContext())}
                                     </td>
                                 ))}
