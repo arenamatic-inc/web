@@ -215,6 +215,8 @@ export type SalesPeriodRow = {
     sales_by_revenue_type: Record<string, number>;
     sales_by_revenue_type_and_source: Record<string, Record<string, number>>;
     closed: boolean;
+    // Non-null only for the current open period. Full-period extrapolation based on elapsed fraction.
+    projected_sales_total_cents: number | null;
 };
 
 export type SalesReportResponse = {

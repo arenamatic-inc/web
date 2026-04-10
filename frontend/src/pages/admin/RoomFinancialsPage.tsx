@@ -115,25 +115,61 @@ function getRevenueTypeSourceCents(
         ?? 0;
 }
 
+const MONTH_NAMES = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+
 function renderSalesTrendTooltip({ active, payload }: { active?: boolean; payload?: any[] }) {
     if (!active || !payload || payload.length === 0) return null;
-    const label = payload[0]?.payload?.monthLabel ?? "";
-    const sortedPayload = [...payload].sort((a, b) => {
+
+    // Separate solid (actual) and dashed (projected) entries — show each year once.
+    const solidEntries = payload.filter(e => !String(e.dataKey).endsWith("_proj"));
+    const projEntries = payload.filter(e => String(e.dataKey).endsWith("_proj"));
+
+    const sortedSolid = [...solidEntries].sort((a, b) => {
         const aYear = a.payload?.[`${a.dataKey}Year`] ?? Number(a.name);
         const bYear = b.payload?.[`${b.dataKey}Year`] ?? Number(b.name);
         return bYear - aYear;
     });
+
+    // Period label: show month + week number or day date when available.
+    const p = payload[0]?.payload ?? {};
+    const monthLabel: string = p.monthLabel ?? "";
+    const weekLabel: string = p.weekLabel ?? "";
+    const dayLabel: string = p.dayLabel ?? "";
+    const periodLabel = dayLabel || weekLabel || monthLabel;
+
     return (
         <div className="bg-gray-900 text-gray-100 text-xs rounded border border-gray-700 px-3 py-2">
-            <div className="font-semibold mb-1">{label}</div>
-            {sortedPayload.map((entry) => (
-                <div key={entry.dataKey} className="flex items-center justify-between gap-3">
-                    <span className="text-gray-300">
-                        {entry.payload?.[`${entry.dataKey}Year`] ?? entry.name}
-                    </span>
-                    <span className="font-mono">{formatCurrency(entry.value)}</span>
-                </div>
-            ))}
+            <div className="font-semibold mb-1">{periodLabel}</div>
+            {sortedSolid.map((entry) => {
+                const yearKey = `${entry.dataKey}Year`;
+                const displayYear = entry.payload?.[yearKey] ?? entry.name;
+                const projActual: number | undefined = entry.payload?.[`y${displayYear}_actual`];
+                const displayValue: number = entry.value ?? 0;
+                const isProjected = projActual != null;
+                return (
+                    <div key={entry.dataKey} className="flex items-center justify-between gap-3">
+                        <span className="text-gray-300">{displayYear}</span>
+                        {isProjected ? (
+                            <span className="font-mono">
+                                <span className="text-yellow-300">{formatCurrency(displayValue)} proj</span>
+                                <span className="text-gray-400 ml-1">(actual: {formatCurrency(projActual!)})</span>
+                            </span>
+                        ) : (
+                            <span className="font-mono">{formatCurrency(displayValue)}</span>
+                        )}
+                    </div>
+                );
+            })}
+            {/* Proj-only entries that have no solid counterpart (shouldn't normally appear) */}
+            {projEntries
+                .filter(pe => !solidEntries.some(se => `${se.dataKey}_proj` === pe.dataKey))
+                .map(entry => (
+                    <div key={entry.dataKey} className="flex items-center justify-between gap-3">
+                        <span className="text-gray-300">{entry.name} (proj)</span>
+                        <span className="font-mono text-yellow-300">{formatCurrency(entry.value / 100)} proj</span>
+                    </div>
+                ))
+            }
         </div>
     );
 }
@@ -202,6 +238,7 @@ function RoomFinancialsPageBase({
     const [salesTrendLoading, setSalesTrendLoading] = useState(false);
     const [salesTrendError, setSalesTrendError] = useState("");
     const [salesTrendPeriod, setSalesTrendPeriod] = useState<"day" | "week" | "month">("month");
+    const [salesTrendShowProjection, setSalesTrendShowProjection] = useState(true);
 
     const [userLiabilityRows, setUserLiabilityRows] = useState<UserLiabilityPeriodRow[]>([]);
     const [userLiabilityLoading, setUserLiabilityLoading] = useState(false);
@@ -823,6 +860,7 @@ function RoomFinancialsPageBase({
 
     const salesTrendSourceRows = salesTrendPeriod === "month" ? salesRows : salesTrendRows;
     const salesTrendClosedRows = salesTrendSourceRows.filter(row => row.closed);
+    const salesTrendOpenRow = salesTrendSourceRows.find(row => !row.closed) ?? null;
     const salesTrendPastRows = salesTrendClosedRows.filter(
         row => new Date(row.period_end).getTime() < Date.now()
     );
@@ -835,9 +873,13 @@ function RoomFinancialsPageBase({
             .slice()
             .sort((a, b) => new Date(a.period_end).getTime() - new Date(b.period_end).getTime())
             .at(-1);
-    const salesTrendAnchorDate = salesTrendLastClosedRow
-        ? new Date(new Date(salesTrendLastClosedRow.period_end).getTime() - 1)
-        : null;
+    // When there's an open (current) period AND projection is enabled, anchor to today
+    // so the window extends to include it. Otherwise anchor to the last closed period.
+    const salesTrendAnchorDate = (salesTrendOpenRow && salesTrendShowProjection)
+        ? new Date()
+        : salesTrendLastClosedRow
+            ? new Date(new Date(salesTrendLastClosedRow.period_end).getTime() - 1)
+            : null;
     if (salesTrendAnchorDate && salesTrendPeriod !== "month") {
         if (salesTrendPeriod === "week") {
             salesTrendAnchorDate.setDate(salesTrendAnchorDate.getDate() - 7);
@@ -884,6 +926,7 @@ function RoomFinancialsPageBase({
 
     const salesTrendYears = Array.from(new Set(salesTrendClosedRows.map(row => row.year))).sort();
 
+    // Value map for closed periods (actual).
     const salesTrendValueMap = new Map<string, number>();
     salesTrendClosedRows.forEach(row => {
         const dt = new Date(row.period_start);
@@ -900,14 +943,48 @@ function RoomFinancialsPageBase({
         salesTrendValueMap.set(key, row.sales_total_cents / 100);
     });
 
+    // Projection map: keyed the same way, value is the extrapolated total in dollars.
+    const salesTrendProjectedMap = new Map<string, { projected: number; actual: number }>();
+    if (salesTrendOpenRow?.projected_sales_total_cents != null) {
+        const row = salesTrendOpenRow;
+        const projectedCents = row.projected_sales_total_cents!;
+        const dt = new Date(row.period_start);
+        if (!isNaN(dt.getTime())) {
+            const year = row.year ?? dt.getFullYear();
+            const month = row.month ?? dt.getMonth() + 1;
+            const day = row.day ?? dt.getDate();
+            const week = row.week ?? getISOWeek(dt);
+            const key = salesTrendPeriod === "month"
+                ? `${year}-M${month}`
+                : salesTrendPeriod === "week"
+                    ? `${year}-W${week}`
+                    : `${year}-M${month}-D${day}`;
+            salesTrendProjectedMap.set(key, {
+                projected: projectedCents / 100,
+                actual: row.sales_total_cents / 100,
+            });
+        }
+    }
+
+    // Current year for matching the open period to the right YoY series.
+    const salesTrendCurrentYear = new Date().getFullYear();
+
     const salesTrendChartData = salesTrendAnchorBaseDate
         ? salesTrendWindow.map(({ offset, date, xIndex }, idx) => {
             const monthLabel = salesTrendMonthOrder[date.getMonth()];
             const prevMonth = idx > 0 ? salesTrendWindow[idx - 1].date.getMonth() : null;
             const showLabel = idx === 0 || prevMonth !== date.getMonth();
+
+            // Week label: "W12" style; day label: "Mar 31" style.
+            const weekNum = getISOWeek(date);
+            const weekLabel = salesTrendPeriod === "week" ? `W${weekNum} ${MONTH_NAMES[date.getMonth()]}` : "";
+            const dayLabel = salesTrendPeriod === "day" ? `${MONTH_NAMES[date.getMonth()]} ${date.getDate()}` : "";
+
             const point: Record<string, string | number> = {
                 xIndex,
                 monthLabel,
+                weekLabel,
+                dayLabel,
                 tickLabel: showLabel ? monthLabel : "",
             };
 
@@ -925,9 +1002,20 @@ function RoomFinancialsPageBase({
                         ? `${targetYear}-W${targetWeek}`
                         : `${targetYear}-M${targetMonth}-D${targetDay}`;
 
+                const projEntry = (year === salesTrendCurrentYear || targetYear === salesTrendCurrentYear)
+                    ? salesTrendProjectedMap.get(key)
+                    : undefined;
+
                 if (salesTrendPeriod !== "day") {
-                    point[`y${year}`] = salesTrendValueMap.get(key) ?? 0;
+                    const actual = salesTrendValueMap.get(key);
+                    // For the open period, plot the projected (extrapolated) value on the solid line.
+                    // Store actual-so-far in _actual for the tooltip.
+                    point[`y${year}`] = (projEntry && salesTrendShowProjection) ? projEntry.projected : (actual ?? 0);
                     point[`y${year}Year`] = targetYear;
+                    if (projEntry && salesTrendShowProjection) {
+                        point[`y${year}_proj`] = projEntry.projected;
+                        point[`y${year}_actual`] = projEntry.actual;
+                    }
                     return;
                 }
 
@@ -941,8 +1029,12 @@ function RoomFinancialsPageBase({
                 const avg = trailingValues.length > 0
                     ? trailingValues.reduce((total, value) => total + value, 0) / trailingValues.length
                     : 0;
-                point[`y${year}`] = avg;
+                point[`y${year}`] = (projEntry && salesTrendShowProjection) ? projEntry.projected : avg;
                 point[`y${year}Year`] = targetYear;
+                if (projEntry && salesTrendShowProjection) {
+                    point[`y${year}_proj`] = projEntry.projected;
+                    point[`y${year}_actual`] = projEntry.actual;
+                }
             });
 
             return point;
@@ -1266,6 +1358,17 @@ function RoomFinancialsPageBase({
                                 <option value="day">Daily</option>
                             </select>
                         </label>
+                        {salesTrendOpenRow?.projected_sales_total_cents != null && (
+                            <label className="text-sm text-gray-300 flex items-center gap-2 cursor-pointer select-none">
+                                <input
+                                    type="checkbox"
+                                    checked={salesTrendShowProjection}
+                                    onChange={e => setSalesTrendShowProjection(e.target.checked)}
+                                    className="accent-yellow-400"
+                                />
+                                Extrapolate current {salesTrendPeriod}
+                            </label>
+                        )}
                     </div>
                     {salesTrendIsLoading ? (
                         <div className="text-gray-400 p-8 text-center">Loading…</div>
@@ -1273,8 +1376,13 @@ function RoomFinancialsPageBase({
                         <div className="text-red-400 p-8 text-center">{salesTrendDisplayError}</div>
                     ) : (
                         <div className="bg-black/40 rounded-xl shadow-md p-4">
-                            <div className="text-gray-400 text-sm mb-4">
-                                Sales by {salesTrendPeriod} with YoY series (closed periods only).
+                            <div className="text-gray-400 text-sm mb-4 flex items-center gap-3">
+                                <span>Sales by {salesTrendPeriod} with YoY comparison.</span>
+                                {salesTrendOpenRow?.projected_sales_total_cents != null && salesTrendShowProjection && (
+                                    <span className="text-yellow-400 text-xs border border-yellow-600 rounded px-2 py-0.5">
+                                        ◌ Current {salesTrendPeriod} projected
+                                    </span>
+                                )}
                             </div>
                             <div className="h-[420px]">
                                 <ResponsiveContainer width="100%" height="100%">
@@ -1291,17 +1399,39 @@ function RoomFinancialsPageBase({
                                         <YAxis tick={{ fill: "#d1d5db", fontSize: 12 }} />
                                         <Tooltip content={renderSalesTrendTooltip} />
                                         <Legend />
-                                        {salesTrendYears.map((year, index) => (
-                                            <Line
-                                                key={year}
-                                                type="monotone"
-                                                dataKey={`y${year}`}
-                                                name={`${year}`}
-                                                stroke={["#38bdf8", "#fbbf24", "#34d399", "#f472b6", "#a78bfa", "#fb7185"][index % 6]}
-                                                strokeWidth={2}
-                                                dot={false}
-                                            />
-                                        ))}
+                                        {salesTrendYears.map((year, index) => {
+                                            const color = ["#38bdf8", "#fbbf24", "#34d399", "#f472b6", "#a78bfa", "#fb7185"][index % 6];
+                                            const hasProjection = salesTrendShowProjection && salesTrendChartData.some(p => p[`y${year}_proj`] != null);
+                                            return [
+                                                // Solid line: actual values (open period shows actual-so-far)
+                                                <Line
+                                                    key={`solid-${year}`}
+                                                    type="monotone"
+                                                    dataKey={`y${year}`}
+                                                    name={`${year}`}
+                                                    stroke={color}
+                                                    strokeWidth={2}
+                                                    dot={false}
+                                                    legendType={hasProjection ? "plainline" : "line"}
+                                                />,
+                                                // Dashed overlay: projected extrapolation for the current period only.
+                                                // connectNulls joins the last actual point to the projection point.
+                                                hasProjection && (
+                                                    <Line
+                                                        key={`proj-${year}`}
+                                                        type="monotone"
+                                                        dataKey={`y${year}_proj`}
+                                                        name={`${year} (proj)`}
+                                                        stroke={color}
+                                                        strokeWidth={2}
+                                                        strokeDasharray="5 4"
+                                                        dot={false}
+                                                        connectNulls
+                                                        legendType="none"
+                                                    />
+                                                ),
+                                            ];
+                                        })}
                                     </LineChart>
                                 </ResponsiveContainer>
                             </div>

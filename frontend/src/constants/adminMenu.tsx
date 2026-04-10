@@ -2,6 +2,7 @@ import { JSX } from "react";
 import RoomActivityPage from "../pages/admin/RoomActivity";
 import RoomFeeAdminPage from "../pages/admin/RoomFeeAdmin";
 import RoomFinancialsPage, { RoomFinancialsOldPage } from "../pages/admin/RoomFinancialsPage";
+import RoomCapacityPage from "../pages/admin/RoomCapacityPage";
 import RoomAdminPage from "../pages/admin/RoomAdminPage";
 import FaqAdminPage from "../pages/admin/AdminFaq";
 import PlatformLiabilityPage from "../pages/admin/PlatformLiabilityPage";
@@ -32,6 +33,14 @@ export const ADMIN_MENU_ITEMS: AdminMenuItem[] = [
     requiredPermission: "RoomReadFinancials",
     element: () => {
       return <RoomFinancialsPage requiredPermission="RoomGiveRefund" />;
+    },
+  },
+  {
+    path: "/admin/room-capacity",
+    label: "Room Capacity",
+    requiredPermission: "RoomReadFinancials",
+    element: () => {
+      return <RoomCapacityPage requiredPermission="RoomReadFinancials" />;
     },
   },
   // Legacy tab set: comment out this block to hide.
@@ -69,6 +78,12 @@ export const ARENAMATIC_ADMIN_MENU_ITEMS: AdminMenuItem[] = [
     label: "Room Financials",
     requiredPermission: "GlobalRoomReadFinancials",
     element: () => <RoomFinancialsPage requiredPermission="GlobalRoomReadFinancials" enableRoomSelector={true} />,
+  },
+  {
+    path: "/admin/room-capacity",
+    label: "Room Capacity",
+    requiredPermission: "GlobalRoomReadFinancials",
+    element: () => <RoomCapacityPage requiredPermission="GlobalRoomReadFinancials" enableRoomSelector={true} />,
   },
   // Legacy tab set: comment out this block to hide.
   {

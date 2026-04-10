@@ -37,7 +37,6 @@ function App() {
   const isAuthHost = hostname === import.meta.env.VITE_AUTH_HOST;
   const isArenamaticSite = hostname === import.meta.env.VITE_ARENAMATIC_HOST;
 
-
   console.log(import.meta.env.VITE_COGNITO_CLIENT_ID); // Should log the value from .env
   console.log(import.meta.env.VITE_COGNITO_DOMAIN); // Log this in your frontend code
 
@@ -46,7 +45,7 @@ function App() {
   console.log("Expected arenamatic host:", import.meta.env.VITE_ARENAMATIC_HOST);
 
   console.log('arenamaticAdminRoutes:', arenamaticAdminRoutes);
-  
+
   let routeElements;
 
   if (isArenamaticSite) {

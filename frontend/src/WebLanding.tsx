@@ -46,7 +46,6 @@ export default function WebLanding() {
   const IOS_APP_URL = "https://apps.apple.com/us/app/snookerclub/id6475537905";
   const ANDROID_APP_URL = "https://play.google.com/store/apps/details?id=com.ottawasnookerclub.SnookerClub&pli=1";
 
-
   return (
     <>
       <PageLayout>
