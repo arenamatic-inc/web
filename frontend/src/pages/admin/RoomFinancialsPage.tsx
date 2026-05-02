@@ -140,12 +140,29 @@ function renderSalesTrendTooltip({ active, payload }: { active?: boolean; payloa
     return (
         <div className="bg-gray-900 text-gray-100 text-xs rounded border border-gray-700 px-3 py-2">
             <div className="font-semibold mb-1">{periodLabel}</div>
-            {sortedSolid.map((entry) => {
+            {sortedSolid.map((entry, idx) => {
                 const yearKey = `${entry.dataKey}Year`;
                 const displayYear = entry.payload?.[yearKey] ?? entry.name;
                 const projActual: number | undefined = entry.payload?.[`y${displayYear}_actual`];
                 const displayValue: number = entry.value ?? 0;
                 const isProjected = projActual != null;
+
+                // YoY growth vs. the next older entry
+                const olderEntry = sortedSolid[idx + 1];
+                let yoyBadge: React.ReactNode = null;
+                if (olderEntry != null) {
+                    const olderValue: number = olderEntry.value ?? 0;
+                    if (olderValue !== 0) {
+                        const currentForCalc = displayValue;
+                        const pct = ((currentForCalc - olderValue) / Math.abs(olderValue)) * 100;
+                        const sign = pct >= 0 ? "+" : "";
+                        const color = pct >= 0 ? "text-green-400" : "text-red-400";
+                        yoyBadge = (
+                            <span className={`ml-2 ${color}`}>({sign}{pct.toFixed(1)}%)</span>
+                        );
+                    }
+                }
+
                 return (
                     <div key={entry.dataKey} className="flex items-center justify-between gap-3">
                         <span className="text-gray-300">{displayYear}</span>
@@ -153,9 +170,10 @@ function renderSalesTrendTooltip({ active, payload }: { active?: boolean; payloa
                             <span className="font-mono">
                                 <span className="text-yellow-300">{formatCurrency(displayValue)} proj</span>
                                 <span className="text-gray-400 ml-1">(actual: {formatCurrency(projActual!)})</span>
+                                {yoyBadge}
                             </span>
                         ) : (
-                            <span className="font-mono">{formatCurrency(displayValue)}</span>
+                            <span className="font-mono">{formatCurrency(displayValue)}{yoyBadge}</span>
                         )}
                     </div>
                 );
@@ -1091,6 +1109,40 @@ function RoomFinancialsPageBase({
         { accessorKey: "net_cents", header: "Net", cell: info => <span className="font-bold">{formatCurrency(info.getValue() as number / 100)}</span> },
     ];
 
+    const taxLiabilityColumns: ColumnDef<RoomFinancialsMonthlyRow>[] = [
+        {
+            id: "month",
+            header: "Month",
+            cell: info => {
+                const row = info.row.original as RoomFinancialsMonthlyRow;
+                const dt = new Date(row.period_start);
+                return isNaN(dt.getTime())
+                    ? "?"
+                    : dt.toLocaleString("default", { month: "short", year: "numeric" });
+            },
+        },
+        {
+            header: "Platform Sales",
+            accessorKey: "sales_platform_cents",
+            cell: info => formatCurrency((info.getValue() as number) / 100),
+        },
+        {
+            header: "Platform Tax Collected",
+            accessorKey: "tax_platform_cents",
+            cell: info => formatCurrency((info.getValue() as number) / 100),
+        },
+        {
+            header: "Room Sales",
+            accessorKey: "sales_room_cents",
+            cell: info => formatCurrency((info.getValue() as number) / 100),
+        },
+        {
+            header: "Room Tax Collected",
+            accessorKey: "tax_room_cents",
+            cell: info => formatCurrency((info.getValue() as number) / 100),
+        },
+    ];
+
     const loadMoreArenaTransactions = async (
         _slug = slug,
         offset = arenaTransactionsOffset,
@@ -1474,6 +1526,27 @@ function RoomFinancialsPageBase({
                         title="Fee Report (Last 36 Months)"
                         data={feeRows}
                         columns={feeColumns}
+                        sorting={sorting}
+                        setSorting={setSorting}
+                        globalFilter={globalFilterTransactions}
+                        setGlobalFilter={setGlobalFilterTransactions}
+                    />
+                )
+            )
+        },
+        {
+            id: "tax_liability_report",
+            label: "Tax Liability",
+            content: (
+                monthlyLoading ? (
+                    <div className="text-gray-400 p-8 text-center">Loading…</div>
+                ) : monthlyError ? (
+                    <div className="text-red-400 p-8 text-center">{monthlyError}</div>
+                ) : (
+                    <AdminTable
+                        title="Tax Liability Report (Last 36 Months)"
+                        data={monthlyRows}
+                        columns={taxLiabilityColumns}
                         sorting={sorting}
                         setSorting={setSorting}
                         globalFilter={globalFilterTransactions}
