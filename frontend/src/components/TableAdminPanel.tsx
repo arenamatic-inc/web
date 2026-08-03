@@ -15,6 +15,13 @@ type Table = {
 
 type TableInput = Omit<Table, "id" | "room_id">;
 
+type PricePolicy = {
+    id: number;
+    name: string;
+    room_id: number;
+    price_matrix: number[][];
+};
+
 type Props = {
     roomSlug: string;
 };
@@ -22,7 +29,9 @@ type Props = {
 export function TableAdminPanel({ roomSlug }: Props) {
     const { idToken } = useAuth();
     const [tables, setTables] = useState<Table[]>([]);
+    const [policies, setPolicies] = useState<PricePolicy[]>([]);
     const [loading, setLoading] = useState(false);
+    const [loadingPolicies, setLoadingPolicies] = useState(false);
     const [showCreate, setShowCreate] = useState(false);
     const [editTable, setEditTable] = useState<Table | null>(null);
     const [error, setError] = useState("");
@@ -43,8 +52,25 @@ export function TableAdminPanel({ roomSlug }: Props) {
             .finally(() => setLoading(false));
     };
 
+    // Fetch price policies for this room
+    const fetchPolicies = () => {
+        if (!idToken || !roomSlug) return;
+        setLoadingPolicies(true);
+        fetch(`${import.meta.env.VITE_API_BASE}/room/admin/${roomSlug}/price-policies`, {
+            headers: { Authorization: `Bearer ${idToken}` },
+        })
+            .then(res => {
+                if (!res.ok) throw new Error("Failed to fetch price policies");
+                return res.json();
+            })
+            .then(setPolicies)
+            .catch(() => setPolicies([]))
+            .finally(() => setLoadingPolicies(false));
+    };
+
     useEffect(() => {
         fetchTables();
+        fetchPolicies();
         // eslint-disable-next-line
     }, [roomSlug, idToken]);
 
@@ -87,18 +113,31 @@ export function TableAdminPanel({ roomSlug }: Props) {
         }
     };
 
+    const canAddTable = policies.length > 0;
+
     return (
         <div className="bg-white rounded-xl p-6 shadow">
             <div className="flex justify-between items-center mb-4">
                 <h3 className="text-lg font-bold">Tables</h3>
                 <button
-                    className="bg-black text-white px-3 py-1 rounded hover:bg-red-400"
+                    className={`px-3 py-1 rounded ${
+                        canAddTable
+                            ? "bg-black text-white hover:bg-red-400"
+                            : "bg-gray-300 text-gray-500 cursor-not-allowed"
+                    }`}
                     onClick={() => setShowCreate(true)}
+                    disabled={!canAddTable}
+                    title={canAddTable ? "" : "Create a price policy first"}
                 >
                     Add Table
                 </button>
             </div>
             {error && <div className="text-red-600 mb-2">{error}</div>}
+            {!canAddTable && (
+                <div className="p-3 mb-4 bg-blue-50 border border-blue-200 text-blue-800 rounded">
+                    Create a price policy first before adding tables.
+                </div>
+            )}
             <div>
                 {tables.length === 0 ? (
                     <div className="text-gray-500">No tables configured for this room.</div>
@@ -147,6 +186,7 @@ export function TableAdminPanel({ roomSlug }: Props) {
             {(showCreate || editTable) && (
                 <TableEditModal
                     table={editTable}
+                    policies={policies}
                     onClose={() => {
                         setShowCreate(false);
                         setEditTable(null);
@@ -158,16 +198,19 @@ export function TableAdminPanel({ roomSlug }: Props) {
     );
 }
 
-// TableEditModal is a simple form for add/edit. You may want to add price policy lookup in production.
+// TableEditModal is a simple form for add/edit with price policy selector.
 function TableEditModal({
     table,
+    policies,
     onClose,
     onSave,
 }: {
     table?: Table | null;
+    policies: PricePolicy[];
     onClose: () => void;
     onSave: (data: TableInput, id?: number) => void;
 }) {
+    const defaultPolicyId = policies.length > 0 ? policies[0].id : 1;
     const [form, setForm] = useState<TableInput>(
         table
             ? {
@@ -184,7 +227,7 @@ function TableEditModal({
                 in_service: true,
                 table_controller_id: undefined,
                 light_controller: "",
-                price_policy_id: 1,
+                price_policy_id: defaultPolicyId,
             }
     );
     const [submitting, setSubmitting] = useState(false);
@@ -198,6 +241,8 @@ function TableEditModal({
             [name]:
                 type === "checkbox"
                     ? (e.target as HTMLInputElement).checked
+                    : type === "number"
+                    ? parseInt(value, 10)
                     : value,
         }));
     };
@@ -261,15 +306,24 @@ function TableEditModal({
                         />
                     </div>
                     <div>
-                        <label className="block text-sm font-medium mb-1">Price Policy ID *</label>
-                        <input
-                            className="w-full border rounded px-3 py-2"
-                            name="price_policy_id"
-                            type="number"
-                            value={form.price_policy_id}
-                            onChange={handleChange}
-                            required
-                        />
+                        <label className="block text-sm font-medium mb-1">Price Policy *</label>
+                        {policies.length === 0 ? (
+                            <div className="text-red-600 text-sm">No price policies available</div>
+                        ) : (
+                            <select
+                                className="w-full border rounded px-3 py-2"
+                                name="price_policy_id"
+                                value={form.price_policy_id}
+                                onChange={handleChange}
+                                required
+                            >
+                                {policies.map((policy) => (
+                                    <option key={policy.id} value={policy.id}>
+                                        {policy.name}
+                                    </option>
+                                ))}
+                            </select>
+                        )}
                     </div>
                     <div>
                         <label className="block text-sm font-medium mb-1">
@@ -295,7 +349,7 @@ function TableEditModal({
                         <button
                             type="submit"
                             className="bg-black text-white px-4 py-2 rounded hover:bg-red-400"
-                            disabled={submitting}
+                            disabled={submitting || policies.length === 0}
                         >
                             {submitting ? "Saving..." : "Save"}
                         </button>

@@ -9,6 +9,7 @@ import {
     useReactTable,
     Row,
 } from "@tanstack/react-table";
+import { isValidElement } from "react";
 
 export function AdminTable<T extends Record<string, any>>({
     data,
@@ -50,6 +51,20 @@ export function AdminTable<T extends Record<string, any>>({
     function exportTableToCsv(filename: string = "export.csv") {
         const leafColumns = table.getVisibleLeafColumns();
         const headerGroups = table.getHeaderGroups();
+
+        const getRenderableText = (value: unknown): string => {
+            if (value === null || value === undefined) return "";
+            if (typeof value === "string" || typeof value === "number" || typeof value === "boolean") {
+                return String(value);
+            }
+            if (Array.isArray(value)) {
+                return value.map(getRenderableText).join("");
+            }
+            if (isValidElement(value)) {
+                return getRenderableText((value.props as { children?: unknown })?.children);
+            }
+            return "";
+        };
 
         const escapeCsv = (value: unknown): string => {
             if (value === null || value === undefined) return '""';
@@ -97,6 +112,10 @@ export function AdminTable<T extends Record<string, any>>({
         );
 
         table.getRowModel().rows.forEach((row: Row<T>) => {
+            const visibleCellsByColumnId = new Map(
+                row.getVisibleCells().map((cell) => [String(cell.column.id), cell])
+            );
+
             const rowVals: string[] = leafColumns.map(col => {
                 let value = row.getValue(col.id);
                 if (value === undefined) {
@@ -110,6 +129,17 @@ export function AdminTable<T extends Record<string, any>>({
                     const accessorKey = (col.columnDef as any).accessorKey;
                     if (accessorKey !== undefined && accessorKey !== null) {
                         value = row.original[accessorKey as keyof T];
+                    }
+                }
+
+                if (value === undefined) {
+                    const cell = visibleCellsByColumnId.get(String(col.id));
+                    if (cell) {
+                        const rendered = flexRender(cell.column.columnDef.cell, cell.getContext());
+                        const renderedText = getRenderableText(rendered);
+                        if (renderedText !== "") {
+                            value = renderedText;
+                        }
                     }
                 }
 

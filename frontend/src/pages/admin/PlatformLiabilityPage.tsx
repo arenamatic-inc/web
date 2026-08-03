@@ -19,6 +19,7 @@ export default function PlatformLiabilityPage({
     const [error, setError] = useState("");
     const [sorting, setSorting] = useState<SortingState>([]);
     const [globalFilter, setGlobalFilter] = useState("");
+    const [monthCount, setMonthCount] = useState(24);
 
     useEffect(() => {
         if (!idToken) return;
@@ -35,7 +36,7 @@ export default function PlatformLiabilityPage({
                 };
 
                 const res = await fetch(
-                    `${import.meta.env.VITE_WEB_FIN_API_BASE}/web/financials/platform-liability-report?period=month&count=24`,
+                    `${import.meta.env.VITE_WEB_FIN_API_BASE}/web/financials/platform-liability-report?period=month&count=${monthCount}`,
                     { headers }
                 );
 
@@ -49,7 +50,7 @@ export default function PlatformLiabilityPage({
                 setLoading(false);
             }
         })();
-    }, [idToken]);
+    }, [idToken, monthCount]);
 
     const columns: ColumnDef<PlatformLiabilityPeriodRow>[] = [
         {
@@ -136,21 +137,35 @@ export default function PlatformLiabilityPage({
                         id: "platform_liability",
                         label: "Platform Liability",
                         content: (
-                            loading ? (
-                                <div className="text-gray-400 p-8 text-center">Loading…</div>
-                            ) : error ? (
-                                <div className="text-red-400 p-8 text-center">{error}</div>
-                            ) : (
-                                <AdminTable
-                                    title="Platform Liability Report (Last 24 Months)"
-                                    data={rows}
-                                    columns={columns}
-                                    sorting={sorting}
-                                    setSorting={setSorting}
-                                    globalFilter={globalFilter}
-                                    setGlobalFilter={setGlobalFilter}
-                                />
-                            )
+                            <>
+                                <div className="flex items-center gap-3 px-4 pt-4">
+                                    <label className="text-sm text-gray-400">Months:</label>
+                                    <select
+                                        className="bg-gray-800 text-gray-100 border border-gray-600 rounded px-2 py-1 text-sm"
+                                        value={monthCount}
+                                        onChange={e => setMonthCount(Number(e.target.value))}
+                                    >
+                                        {[3, 6, 12, 18, 24, 36, 48].map(n => (
+                                            <option key={n} value={n}>{n}</option>
+                                        ))}
+                                    </select>
+                                </div>
+                                {loading ? (
+                                    <div className="text-gray-400 p-8 text-center">Loading…</div>
+                                ) : error ? (
+                                    <div className="text-red-400 p-8 text-center">{error}</div>
+                                ) : (
+                                    <AdminTable
+                                        title={`Platform Liability Report (Last ${monthCount} Months)`}
+                                        data={rows}
+                                        columns={columns}
+                                        sorting={sorting}
+                                        setSorting={setSorting}
+                                        globalFilter={globalFilter}
+                                        setGlobalFilter={setGlobalFilter}
+                                    />
+                                )}
+                            </>
                         ),
                     },
                 ]}

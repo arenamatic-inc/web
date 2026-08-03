@@ -97,7 +97,7 @@ export default function WebLanding() {
                 </a>
               )}
               {data.social?.youtube && (
-                <a href={data.social.youtube} target="_blank" className="hover:text-red-400">
+                <a href="https://www.youtube.com/@ArenamaticLive" target="_blank" className="hover:text-red-400">
                   <SiYoutube />
                 </a>
               )}

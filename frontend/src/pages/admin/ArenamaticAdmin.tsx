@@ -87,6 +87,16 @@ export default function ArenamaticAdmin() {
                                 </a>
                             </div>
                         )}
+                        {permissions?.global_permissions.includes("GlobalRoomReadFinancials") && (
+                            <div className="mt-6">
+                                <a
+                                    href="/admin/room-health"
+                                    className="bg-blue-900 text-white px-5 py-2 rounded hover:bg-blue-800 transition"
+                                >
+                                    Room Health
+                                </a>
+                            </div>
+                        )}
                         {/* Legacy tab set: comment out to hide. */}
                         {permissions?.global_permissions.includes("GlobalRoomReadFinancials") && (
                             <div className="mt-6">

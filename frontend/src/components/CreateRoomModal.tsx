@@ -52,7 +52,7 @@ export function CreateRoomModal({ onClose, onCreated }: CreateRoomModalProps) {
                 body: JSON.stringify({
                     name,
                     slug,
-                    tz,
+                    timezone: tz,
                     currency,
                     email,
                     show_in_app: showInApp,

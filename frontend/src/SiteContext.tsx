@@ -11,14 +11,23 @@ const SiteContext = createContext<SiteContextType>({
 });
 
 export const SiteProvider = ({ children }: { children: React.ReactNode }) => {
-const hostname = window.location.hostname.toLowerCase();
+  const hostname = window.location.hostname.toLowerCase();
 
-const isArenamaticSite = (
-  hostname === "www.arenamatic.ca" ||
-  hostname === "wwwstaging.arenamatic.ca"
-);
+  const parseHosts = (raw: string | undefined): string[] =>
+    (raw || "")
+      .split(",")
+      .map(h => h.trim().toLowerCase())
+      .filter(Boolean);
 
-const isAuthHost = hostname === "auth.arenamatic.ca";
+  const arenamaticHosts = parseHosts(
+    import.meta.env.VITE_ARENAMATIC_HOSTS || import.meta.env.VITE_ARENAMATIC_HOST
+  );
+  const authHosts = parseHosts(
+    import.meta.env.VITE_AUTH_HOSTS || import.meta.env.VITE_AUTH_HOST
+  );
+
+  const isArenamaticSite = arenamaticHosts.includes(hostname);
+  const isAuthHost = authHosts.includes(hostname);
 
   return (
     <SiteContext.Provider value={{ isArenamaticSite, isAuthHost }}>

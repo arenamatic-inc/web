@@ -18,24 +18,35 @@ import Privacy from './pages/Privacy';
 import ArenamaticAdmin from './pages/admin/ArenamaticAdmin';
 import WebFaq from './pages/WebFAQ';
 import APrivacy from './pages/APrivacy';
+import { useSite } from './SiteContext';
 
-const arenamaticAdminRoutes = ARENAMATIC_ADMIN_MENU_ITEMS.map(({ path, element }) => (
-  <Route key={path} path={path} element={element()} />
-));
-
-const adminRoutes = ADMIN_MENU_ITEMS.map(({ path, element }) => (
+const arenamaticAdminRoutes = ARENAMATIC_ADMIN_MENU_ITEMS.map(({ path, element, requiredPermission }) => (
   <Route
     key={path}
     path={path}
-    element={element()}
+    element={
+      <RequirePermission permission={requiredPermission}>
+        {element()}
+      </RequirePermission>
+    }
+  />
+));
+
+const adminRoutes = ADMIN_MENU_ITEMS.map(({ path, element, requiredPermission }) => (
+  <Route
+    key={path}
+    path={path}
+    element={
+      <RequirePermission permission={requiredPermission}>
+        {element()}
+      </RequirePermission>
+    }
   />
 ));
 
 // App.tsx
 function App() {
-  const hostname = window.location.hostname;
-  const isAuthHost = hostname === import.meta.env.VITE_AUTH_HOST;
-  const isArenamaticSite = hostname === import.meta.env.VITE_ARENAMATIC_HOST;
+  const { isAuthHost, isArenamaticSite } = useSite();
 
   console.log(import.meta.env.VITE_COGNITO_CLIENT_ID); // Should log the value from .env
   console.log(import.meta.env.VITE_COGNITO_DOMAIN); // Log this in your frontend code

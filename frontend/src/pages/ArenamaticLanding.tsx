@@ -62,6 +62,18 @@ export default function ArenamaticLanding() {
                         />
                     </div>
                 </div>
+
+                <p className="mt-6 text-gray-700">
+                    Visit our YouTube channel: {" "}
+                    <a
+                        href="https://www.youtube.com/@ArenamaticLive"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-blue-900 underline"
+                    >
+                        @ArenamaticLive
+                    </a>
+                </p>
             </section>
 
             {/* Three Pillars With Images */}
