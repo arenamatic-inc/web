@@ -115,6 +115,18 @@ function getRevenueTypeSourceCents(
         ?? 0;
 }
 
+const RECONCILIATION_HST_RATE = 0.13;
+const USER_LIABILITY_VISIBLE_MONTHS = 36;
+
+function getReconciliationHstCents(totalFeesCents: number): number {
+    return Math.round(totalFeesCents * RECONCILIATION_HST_RATE);
+}
+
+type UserLiabilityDisplayRow = UserLiabilityPeriodRow & {
+    refunds_including_tax_cents: number;
+    net_change_cents: number;
+};
+
 const MONTH_NAMES = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 
 function renderSalesTrendTooltip({ active, payload }: { active?: boolean; payload?: any[] }) {
@@ -442,7 +454,7 @@ function RoomFinancialsPageBase({
                 };
 
                 const res = await fetch(
-                    `${import.meta.env.VITE_WEB_FIN_API_BASE}/web/financials/user-liability-report/${slug}?period=month&count=36`,
+                    `${import.meta.env.VITE_WEB_FIN_API_BASE}/web/financials/user-liability-report/${slug}?period=month&count=${USER_LIABILITY_VISIBLE_MONTHS + 1}`,
                     { headers }
                 );
 
@@ -457,6 +469,33 @@ function RoomFinancialsPageBase({
             }
         })();
     }, [idToken, slug]);
+
+    const userLiabilityDisplayRows: UserLiabilityDisplayRow[] = userLiabilityRows
+        .slice(0, USER_LIABILITY_VISIBLE_MONTHS)
+        .map((row, index) => {
+            const priorRow = userLiabilityRows[index + 1];
+            const fallbackNetChange = row.deposits_cents - row.withdrawals_cents - row.spend_cents + row.refunds_cents + row.transfer_cents;
+
+            if (
+                row.room_liability_balance_cents === undefined
+                || priorRow?.room_liability_balance_cents === undefined
+            ) {
+                return {
+                    ...row,
+                    refunds_including_tax_cents: row.refunds_cents,
+                    net_change_cents: fallbackNetChange,
+                };
+            }
+
+            const netChangeCents = row.room_liability_balance_cents - priorRow.room_liability_balance_cents;
+            const refundsIncludingTaxCents = netChangeCents - row.deposits_cents + row.withdrawals_cents + row.spend_cents - row.transfer_cents;
+
+            return {
+                ...row,
+                refunds_including_tax_cents: refundsIncludingTaxCents,
+                net_change_cents: netChangeCents,
+            };
+        });
 
     useEffect(() => {
         if (!slug) return;
@@ -682,7 +721,7 @@ function RoomFinancialsPageBase({
         },
     ];
 
-    const userLiabilityColumns: ColumnDef<UserLiabilityPeriodRow>[] = [
+    const userLiabilityColumns: ColumnDef<UserLiabilityDisplayRow>[] = [
         {
             id: "month",
             header: "Month",
@@ -714,13 +753,13 @@ function RoomFinancialsPageBase({
             },
         },
         {
-            header: "Spend (Net)",
+            header: "Spend",
             accessorKey: "spend_cents",
             cell: info => formatCurrency((info.getValue() as number) / 100),
         },
         {
-            header: "Refunds",
-            accessorKey: "refunds_cents",
+            header: "Refunds (Inc Tax)",
+            accessorKey: "refunds_including_tax_cents",
             cell: info => formatCurrency((info.getValue() as number) / 100),
         },
         {
@@ -730,11 +769,10 @@ function RoomFinancialsPageBase({
         },
         {
             id: "liability_change",
-            header: "Liability Change",
+            header: "Net Change",
             cell: info => {
                 const row = info.row.original;
-                const liabilityChange = row.deposits_cents - row.spend_cents - row.withdrawals_cents + row.refunds_cents + row.transfer_cents;
-                return <span className="font-bold">{formatCurrency(liabilityChange / 100)}</span>;
+                return <span className="font-bold">{formatCurrency(row.net_change_cents / 100)}</span>;
             },
         },
         {
@@ -836,9 +874,28 @@ function RoomFinancialsPageBase({
             cell: info => formatCurrency((info.getValue() as number) / 100),
         },
         {
+            header: "Transfers",
+            accessorKey: "transfer_cents",
+            cell: info => formatCurrency((info.getValue() as number) / 100),
+        },
+        {
+            id: "hst_13_cents",
+            header: "13% HST",
+            cell: info => {
+                const row = info.row.original;
+                const hstCents = getReconciliationHstCents(row.total_fees_cents);
+                return formatCurrency(hstCents / 100);
+            },
+        },
+        {
             header: "Net to Room",
-            accessorKey: "net_to_room_cents",
-            cell: info => <span className="font-bold">{formatCurrency((info.getValue() as number) / 100)}</span>,
+            id: "net_to_room_after_hst_cents",
+            cell: info => {
+                const row = info.row.original;
+                const hstCents = getReconciliationHstCents(row.total_fees_cents);
+                const adjustedNetToRoomCents = row.net_to_room_cents - hstCents;
+                return <span className="font-bold">{formatCurrency(adjustedNetToRoomCents / 100)}</span>;
+            },
         },
     ];
 
@@ -1503,7 +1560,7 @@ function RoomFinancialsPageBase({
                 ) : (
                     <AdminTable
                         title="User Liability Report (Last 36 Months)"
-                        data={userLiabilityRows}
+                        data={userLiabilityDisplayRows}
                         columns={userLiabilityColumns}
                         sorting={sorting}
                         setSorting={setSorting}

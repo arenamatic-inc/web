@@ -298,6 +298,7 @@ export type ReconciliationPeriodRow = {
     platform_sales_cents: number;
     platform_tax_held_cents: number;
     total_fees_cents: number;
+    transfer_cents: number;
     net_to_room_cents: number;
     closed: boolean;
 };
